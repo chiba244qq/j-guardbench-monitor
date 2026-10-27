@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J-GuardBench Monitoring Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: { brand: { 500: '#3b82f6', 600: '#2563eb' } }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+
+  <!-- Password Protection Gate -->
+  <div id="auth-gate" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="p-2.5 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </span>
+        <div>
+          <h2 class="text-xl font-bold text-white">限定公開ダッシュボード</h2>
+          <p class="text-xs text-slate-400">J-GuardBench Live Monitor</p>
+        </div>
+      </div>
+      <form onsubmit="handleAuth(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">パスワードを入力してください</label>
+          <input type="password" id="password-input" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" placeholder="パスワード..." autofocus required>
+        </div>
+        <div id="auth-error" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5">
+          パスワードが正しくありません。
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg text-sm transition shadow-lg shadow-blue-600/20">認証して開く</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Main (Hidden until authenticated) -->
+  <div id="dashboard-content" class="hidden max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-slate-800 gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center p-2 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/30">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </span>
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+              J-GuardBench Live Monitor
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Running
+              </span>
+            </h1>
+            <p class="text-sm text-slate-400">日本語AIエージェント・LLM向けプロンプトインジェクション防御ベンチマーク生成状況</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-slate-400 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+        <div class="text-xs">最終更新: <span id="updated-at" class="font-mono text-slate-200">読み込み中...</span></div>
+        <button onclick="fetchStats()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs border border-slate-700 transition">更新</button>
+        <button onclick="logout()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 rounded text-xs border border-slate-700 transition">ログアウト</button>
+      </div>
+    </header>
+
+    <!-- Key Metrics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-8">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">総生成レコード数</div>
+        <div class="mt-2 text-3xl font-extrabold text-white font-mono" id="stat-total">-</div>
+        <div class="mt-1 text-xs text-slate-500">10月30日までに数千件を目標</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="text-xs font-semibold text-rose-400 uppercase tracking-wider">攻撃プロンプト (BLOCK)</div>
+        <div class="mt-2 text-3xl font-extrabold text-rose-400 font-mono" id="stat-block">-</div>
+        <div class="mt-1 text-xs text-slate-500">直接/間接インジェクション・脱獄</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">正常プロンプト (ALLOW)</div>
+        <div class="mt-2 text-3xl font-extrabold text-emerald-400 font-mono" id="stat-allow">-</div>
+        <div class="mt-1 text-xs text-slate-500">過剰ブロック防止（False Positive）</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="text-xs font-semibold text-blue-400 uppercase tracking-wider">稼働インフラ / クレジット</div>
+        <div class="mt-2 text-xl font-bold text-slate-200 font-mono">16 vCPU / 64GB</div>
+        <div class="mt-1 text-xs text-blue-400">GCP全体枠より自動相殺中</div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-semibold text-slate-300 mb-4">カテゴリ別データ内訳</h3>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-semibold text-slate-300 mb-4">リスク深刻度分布</h3>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="severityChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Records Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-300">最新生成レコード（リアルタイム抜粋）</h3>
+        <span class="text-xs text-slate-500">直近の生成サンプルを表示中</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <tr>
+              <th class="px-4 py-3 font-semibold">ID / カテゴリ</th>
+              <th class="px-4 py-3 font-semibold">シナリオ / 手法</th>
+              <th class="px-4 py-3 font-semibold">判定</th>
+              <th class="px-4 py-3 font-semibold">入力プロンプト</th>
+              <th class="px-4 py-3 font-semibold">判定の技術的根拠</th>
+            </tr>
+          </thead>
+          <tbody id="records-table-body" class="divide-y divide-slate-800">
+            <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">データを読み込み中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // SHA-256 hash for password: guardbench2026
+    const EXPECTED_HASH = "2104cbf945345ed06db8ab76dcf84efe27f3617627e89511cf75917d749753d3";
+
+    async function sha256(str) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function handleAuth(e) {
+      e.preventDefault();
+      const input = document.getElementById('password-input').value;
+      const hash = await sha256(input);
+      if (hash === EXPECTED_HASH) {
+        sessionStorage.setItem('jgb_auth', 'true');
+        showDashboard();
+      } else {
+        document.getElementById('auth-error').classList.remove('hidden');
+      }
+    }
+
+    function checkAuth() {
+      if (sessionStorage.getItem('jgb_auth') === 'true') {
+        showDashboard();
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById('auth-gate').classList.add('hidden');
+      document.getElementById('dashboard-content').classList.remove('hidden');
+      fetchStats();
+      setInterval(fetchStats, 10000);
+    }
+
+    function logout() {
+      sessionStorage.removeItem('jgb_auth');
+      location.reload();
+    }
+
+    let catChart = null;
+    let sevChart = null;
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('./stats.json?t=' + Date.now());
+        if (!res.ok) throw new Error('Failed to load stats.json');
+        const data = await res.json();
+        renderDashboard(data);
+      } catch (err) {
+        console.warn('Failed to load stats.json:', err);
+      }
+    }
+
+    function renderDashboard(data) {
+      document.getElementById('updated-at').textContent = data.updated_at || 'Just now';
+      document.getElementById('stat-total').textContent = (data.total_records || 0).toLocaleString();
+      document.getElementById('stat-block').textContent = ((data.labels && data.labels.BLOCK) || 0).toLocaleString();
+      document.getElementById('stat-allow').textContent = ((data.labels && data.labels.ALLOW) || 0).toLocaleString();
+
+      // Category Chart
+      const catLabels = Object.keys(data.categories || {});
+      const catValues = Object.values(data.categories || {});
+      if (catChart) catChart.destroy();
+      catChart = new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+          labels: catLabels,
+          datasets: [{
+            data: catValues,
+            backgroundColor: ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#10b981'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } } }
+        }
+      });
+
+      // Severity Chart
+      const sevLabels = Object.keys(data.severities || {});
+      const sevValues = Object.values(data.severities || {});
+      if (sevChart) sevChart.destroy();
+      sevChart = new Chart(document.getElementById('severityChart'), {
+        type: 'bar',
+        data: {
+          labels: sevLabels,
+          datasets: [{
+            label: '件数',
+            data: sevValues,
+            backgroundColor: '#3b82f6',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // Table
+      const tbody = document.getElementById('records-table-body');
+      tbody.innerHTML = '';
+      (data.latest_records || []).forEach(r => {
+        const isBlock = r.target_label === 'BLOCK';
+        const badge = isBlock 
+          ? '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">BLOCK</span>'
+          : '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ALLOW</span>';
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-800/50 transition';
+        row.innerHTML = `
+          <td class="px-4 py-3 align-top whitespace-nowrap">
+            <div class="font-mono text-xs font-medium text-blue-400">${r.id}</div>
+            <div class="text-xs text-slate-400">${r.category}</div>
+          </td>
+          <td class="px-4 py-3 align-top whitespace-nowrap">
+            <div class="text-xs text-slate-200">${r.scenario}</div>
+            <div class="text-xs text-slate-500 font-mono">${r.attack_vector}</div>
+          </td>
+          <td class="px-4 py-3 align-top whitespace-nowrap">${badge}</td>
+          <td class="px-4 py-3 align-top">
+            <div class="text-xs text-slate-200 line-clamp-2 hover:line-clamp-none font-mono bg-slate-950/40 p-2 rounded border border-slate-800">${escapeHtml(r.prompt)}</div>
+          </td>
+          <td class="px-4 py-3 align-top">
+            <div class="text-xs text-slate-400 line-clamp-2 hover:line-clamp-none">${escapeHtml(r.rationale)}</div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    checkAuth();
+  </script>
+</body>
+</html>
