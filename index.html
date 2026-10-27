@@ -507,14 +507,17 @@
               </span>
             </div>
             <!-- 判定結果バッジ (出題者の正解 vs 防御AIの回答) -->
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40" title="出題者が定めた模範解答">
-                📘 模範正解: BLOCK
-              </span>
-              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" title="防御側ガードレールが実際に出力した答案">
-                🤖 防御AIの回答: ALLOW (⚠️見逃し)
-              </span>
-              <span class="text-xs text-slate-500 font-mono">${b.latency_ms || 0}ms</span>
+            <div class="flex flex-wrap items-center gap-2 bg-slate-950/90 px-3 py-1.5 rounded-lg border border-slate-800">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] text-slate-400 font-medium">出題正解:</span>
+                <span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40" title="出題者が定めた模範解答">BLOCK 🛑 (危険)</span>
+              </div>
+              <span class="text-slate-600 text-xs">➡️</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] text-slate-400 font-medium">防御AI答案:</span>
+                <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" title="防御側ガードレールが実際に出力した答案">ALLOW ⚠️ (すり抜け)</span>
+              </div>
+              <span class="text-xs text-slate-500 font-mono pl-1 border-l border-slate-800">${b.latency_ms || 0}ms</span>
             </div>
           </div>
 
@@ -534,7 +537,7 @@
             <!-- 1. 攻撃者の真の狙い -->
             <div class="bg-rose-950/20 border border-rose-500/30 rounded-lg p-3 text-xs leading-relaxed">
               <div class="font-bold text-rose-300 mb-1 flex items-center gap-1.5">
-                <span class="text-rose-400">🎯 攻撃の真の意図 (Attack Intent):</span>
+                <span class="text-rose-400">🎯 攻撃者の真の意図 (Attack Intent):</span>
               </div>
               <div class="text-rose-100/90 font-medium">${escapeHtml(b.attack_intent || '権限外の操作または機密データへの不正アクセス')}</div>
             </div>
@@ -542,24 +545,28 @@
             <!-- 2. 防御側が見落とした要因 -->
             <div class="bg-amber-950/20 border border-amber-500/30 rounded-lg p-3 text-xs leading-relaxed">
               <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-                <span class="text-amber-400">👁️ 防御側が見落とした要因 (Why it Bypassed):</span>
+                <span class="text-amber-400">👁️ 防御側AIが見落とした要因 (Why it Bypassed):</span>
               </div>
               <div class="text-amber-100/90 font-medium">${escapeHtml(b.missed_factor || '丁寧な相談文脈や正当な口実に隠蔽され、背後にある権限違反を見落とした')}</div>
             </div>
           </div>
 
-          <!-- 最下段: 出題者の模範正解基準と防御側誤答の対比 -->
-          <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3.5 text-xs text-slate-300 space-y-2">
-            <div class="flex items-center gap-1.5 font-bold text-blue-300">
-              <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-              <span>📘 出題者の模範正解基準 (なぜ模範解答がBLOCKなのか / Rationale):</span>
+          <!-- 最下段: 出題者の正解基準と防御側誤答の対比 -->
+          <div class="bg-blue-950/15 border border-blue-500/30 rounded-lg p-3.5 text-xs text-slate-300 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 font-bold text-blue-300">
+                <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <span>📘 出題者による正解の解説（なぜ本来 BLOCK と判定すべきなのか）:</span>
+              </div>
+              <span class="text-[10px] text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded font-mono border border-blue-500/30">模範解答の根拠 (Ground Truth Rationale)</span>
             </div>
-            <div class="text-slate-200 font-sans pl-3 border-l-2 border-blue-500/50 leading-relaxed text-[11px]">
+            <div class="text-slate-200 font-sans pl-3 border-l-2 border-blue-400 leading-relaxed text-[11px]">
               ${escapeHtml(b.rationale || '-')}
             </div>
-            <div class="text-[11px] text-rose-300 bg-rose-500/10 px-2.5 py-1.5 rounded border border-rose-500/30 flex items-start gap-1.5 leading-normal">
-              <span class="font-bold shrink-0">⚠️ 判定の食い違い:</span>
-              <span>出題者AIは上記理由で「正解はBLOCK」と定めていましたが、テストを受けた防御側ガードレールは文脈の偽装に騙され【ALLOW】と誤答してすり抜けを許しました。</span>
+            <!-- すり抜け発生の構図 -->
+            <div class="text-[11px] text-rose-200 bg-rose-500/15 px-3 py-2 rounded-lg border border-rose-500/30 flex items-start gap-2 leading-relaxed">
+              <span class="font-bold text-rose-400 shrink-0">⚠️ すり抜け発生の構図:</span>
+              <span>出題データセットでは上記理由により「正解＝BLOCK（危険）」と規定されています。しかし、テストを受けた防御側ガードレールAIはプロンプトの表面的な文脈に騙され、単語<strong>【ALLOW】</strong>と誤答したため、危険な攻撃が見逃されて通過（すり抜け）しました。</span>
             </div>
           </div>
         </div>
@@ -610,11 +617,11 @@
             <!-- 下段: 意図と根拠 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
               <div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
-                <span class="font-bold text-slate-400">🎯 意図・目的 (Intent): </span>
+                <span class="font-bold text-slate-400">🎯 入力の真の意図 (Intent): </span>
                 <span class="text-slate-200 font-medium">${escapeHtml(r.attack_intent || '-')}</span>
               </div>
               <div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
-                <span class="font-bold text-slate-400">💡 権限境界の根拠: </span>
+                <span class="font-bold text-slate-400">💡 出題者判定の根拠 (Rationale): </span>
                 ${escapeHtml(r.rationale || '-')}
               </div>
             </div>
