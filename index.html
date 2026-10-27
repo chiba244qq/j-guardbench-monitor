@@ -485,7 +485,7 @@
       return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-400">${role || '未設定'}</span>`;
     }
 
-    // すり抜けインシデント用カード型レンダラー (見やすさ大幅向上)
+    // すり抜けインシデント用カード型レンダラー (見やすさ大幅向上 & 攻撃意図・見落とし要因の明示)
     function renderBreachesCards(breaches) {
       const container = document.getElementById('breaches-container');
       if (breaches.length === 0) {
@@ -494,11 +494,11 @@
       }
 
       container.innerHTML = breaches.map(b => `
-        <div class="bg-slate-900/90 border border-rose-900/30 rounded-xl p-4 sm:p-5 hover:border-rose-700/50 transition space-y-3">
+        <div class="bg-slate-900/90 border border-rose-900/40 rounded-xl p-4 sm:p-5 hover:border-rose-700/60 transition space-y-3.5 shadow-md">
           <!-- 上段: メタデータバッジバー -->
-          <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="font-mono font-bold text-sm text-rose-400">${b.id}</span>
+              <span class="font-mono font-bold text-sm text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/20">${b.id}</span>
               <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">${b.category} / ${b.attack_vector || '-'}</span>
               ${getRoleBadge(b.user_role)}
               <span class="text-xs px-2.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60 font-medium">
@@ -519,18 +519,38 @@
 
           <!-- 中段: 入力プロンプト本文 -->
           <div>
-            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">【実際の入力プロンプト】</div>
-            <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-slate-100 font-sans leading-relaxed selection:bg-rose-500/30">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
+              <span>【実際の入力プロンプト】</span>
+              <span class="text-[10px] text-slate-500 font-mono">表面上の体裁</span>
+            </div>
+            <div class="bg-slate-950/90 border border-slate-800/90 rounded-lg p-3 text-sm text-slate-100 font-sans leading-relaxed selection:bg-rose-500/30">
               ${escapeHtml(b.prompt)}
             </div>
           </div>
 
-          <!-- 下段: 技術的根拠 (Rationale) -->
-          <div class="bg-amber-950/15 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-200/90 leading-relaxed">
-            <div class="font-bold text-amber-300 mb-0.5 flex items-center gap-1.5">
-              <span>💡 なぜ攻撃なのか / すり抜けた理由 (Rationale):</span>
+          <!-- 下段: 攻撃の真の狙い vs 防御側が見落とした要因 (2カラム対比) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <!-- 1. 攻撃者の真の狙い -->
+            <div class="bg-rose-950/20 border border-rose-500/30 rounded-lg p-3 text-xs leading-relaxed">
+              <div class="font-bold text-rose-300 mb-1 flex items-center gap-1.5">
+                <span class="text-rose-400">🎯 攻撃の真の意図 (Attack Intent):</span>
+              </div>
+              <div class="text-rose-100/90 font-medium">${escapeHtml(b.attack_intent || '権限外の操作または機密データへの不正アクセス')}</div>
             </div>
-            <div>${escapeHtml(b.rationale || '権限スコープを逸脱した不適切なリクエストですが、ガードレールが一般相談と誤認して通過させています。')}</div>
+
+            <!-- 2. 防御側が見落とした要因 -->
+            <div class="bg-amber-950/20 border border-amber-500/30 rounded-lg p-3 text-xs leading-relaxed">
+              <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+                <span class="text-amber-400">👁️ 防御側が見落とした要因 (Why it Bypassed):</span>
+              </div>
+              <div class="text-amber-100/90 font-medium">${escapeHtml(b.missed_factor || '丁寧な相談文脈や正当な口実に隠蔽され、背後にある権限違反を見落とした')}</div>
+            </div>
+          </div>
+
+          <!-- 最下段: 詳細な技術的根拠 -->
+          <div class="bg-slate-950/40 border border-slate-800/80 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
+            <span class="font-bold text-slate-400">💡 権限境界・判定の技術的根拠 (Rationale): </span>
+            ${escapeHtml(b.rationale || '-')}
           </div>
         </div>
       `).join('');
@@ -577,10 +597,16 @@
               </div>
             </div>
 
-            <!-- 下段: 根拠 -->
-            <div class="bg-slate-950/40 border border-slate-800/80 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
-              <span class="font-bold text-slate-400">権限境界の技術的根拠: </span>
-              ${escapeHtml(r.rationale || '-')}
+            <!-- 下段: 意図と根拠 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              <div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
+                <span class="font-bold text-slate-400">🎯 意図・目的 (Intent): </span>
+                <span class="text-slate-200 font-medium">${escapeHtml(r.attack_intent || '-')}</span>
+              </div>
+              <div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
+                <span class="font-bold text-slate-400">💡 権限境界の根拠: </span>
+                ${escapeHtml(r.rationale || '-')}
+              </div>
             </div>
           </div>
         `;
