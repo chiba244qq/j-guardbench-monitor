@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>J-GuardBench Monitoring Dashboard</title>
+  <title>J-GuardBench Security & Live Monitor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -11,7 +11,9 @@
       darkMode: 'class',
       theme: {
         extend: {
-          colors: { brand: { 500: '#3b82f6', 600: '#2563eb' } }
+          colors: {
+            brand: { 500: '#3b82f6', 600: '#2563eb' }
+          }
         }
       }
     }
@@ -28,7 +30,7 @@
         </span>
         <div>
           <h2 class="text-xl font-bold text-white">限定公開ダッシュボード</h2>
-          <p class="text-xs text-slate-400">J-GuardBench Live Monitor</p>
+          <p class="text-xs text-slate-400">J-GuardBench Live Security Monitor</p>
         </div>
       </div>
       <form onsubmit="handleAuth(event)" class="space-y-4">
@@ -50,17 +52,17 @@
     <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-slate-800 gap-4">
       <div>
         <div class="flex items-center gap-3">
-          <span class="inline-flex items-center justify-center p-2 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/30">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span class="inline-flex items-center justify-center p-2.5 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
           </span>
           <div>
             <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              J-GuardBench Live Monitor
+              J-GuardBench Live Security Monitor
               <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Running
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Benchmarking Active
               </span>
             </h1>
-            <p class="text-sm text-slate-400">日本語AIエージェント・LLM向けプロンプトインジェクション防御ベンチマーク生成状況</p>
+            <p class="text-sm text-slate-400">日本語AIエージェント・LLM向けプロンプトインジェクション防御評価＆攻撃突破分析</p>
           </div>
         </div>
       </div>
@@ -71,27 +73,187 @@
       </div>
     </header>
 
-    <!-- Key Metrics Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-8">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">総生成レコード数</div>
-        <div class="mt-2 text-3xl font-extrabold text-white font-mono" id="stat-total">-</div>
-        <div class="mt-1 text-xs text-slate-500">10月30日までに数千件を目標</div>
+    <!-- SECTION 1: Defense & Attack Breach Metrics (KEY FOCUS) -->
+    <div class="my-8">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            🛡️ AIガードレール実機評価（攻撃突破 vs 誤検知）
+          </h2>
+          <p class="text-xs text-slate-400">生成されたプロンプトをAIガードレール（Qwen2.5 / 決定論エンジン）に投入し、実際に遮断できたかを採点中</p>
+        </div>
+        <div class="text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+          採点済: <span id="eval-total" class="font-mono font-bold text-white">-</span> 件
+        </div>
       </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-        <div class="text-xs font-semibold text-rose-400 uppercase tracking-wider">攻撃プロンプト (BLOCK)</div>
-        <div class="mt-2 text-3xl font-extrabold text-rose-400 font-mono" id="stat-block">-</div>
-        <div class="mt-1 text-xs text-slate-500">直接/間接インジェクション・脱獄</div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- 1. 攻撃突破 / すり抜け (False Negative) -->
+        <div class="bg-rose-950/20 border border-rose-500/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-rose-400 uppercase tracking-wider">🚨 攻撃成功（すり抜け）</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30">False Negative</span>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <div class="text-3xl font-extrabold text-rose-400 font-mono" id="eval-fn">-</div>
+            <span class="text-xs text-rose-300/80 font-mono" id="eval-breach-rate">(-%)</span>
+          </div>
+          <p class="mt-1 text-xs text-slate-400">攻撃なのに安全と誤認され通過した重大インシデント</p>
+        </div>
+
+        <!-- 2. 過剰防衛 / 誤ブロック (False Positive) -->
+        <div class="bg-amber-950/20 border border-amber-500/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">⚠️ 誤ブロック（過剰防衛）</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">False Positive</span>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <div class="text-3xl font-extrabold text-amber-400 font-mono" id="eval-fp">-</div>
+            <span class="text-xs text-amber-300/80 font-mono" id="eval-fp-rate">(-%)</span>
+          </div>
+          <p class="mt-1 text-xs text-slate-400">無害な業務・学習入力を誤って遮断した業務阻害数</p>
+        </div>
+
+        <!-- 3. 防御成功 (True Positive) -->
+        <div class="bg-emerald-950/20 border border-emerald-500/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">🛡️ 防御成功（遮断）</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">True Positive</span>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <div class="text-3xl font-extrabold text-emerald-400 font-mono" id="eval-tp">-</div>
+            <span class="text-xs text-emerald-300/80 font-mono" id="eval-defense-rate">(-%)</span>
+          </div>
+          <p class="mt-1 text-xs text-slate-400">攻撃プロンプトを正常に検知・ブロック完了</p>
+        </div>
+
+        <!-- 4. 正常通過 (True Negative) -->
+        <div class="bg-blue-950/20 border border-blue-500/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">✅ 正常通過（許可）</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/20 text-blue-300 border border-blue-500/30">True Negative</span>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <div class="text-3xl font-extrabold text-blue-400 font-mono" id="eval-tn">-</div>
+            <span class="text-xs text-blue-300/80 font-mono" id="eval-accuracy">(-%)</span>
+          </div>
+          <p class="mt-1 text-xs text-slate-400">無害な一般入力を正常に受け入れて回答を提供</p>
+        </div>
       </div>
+    </div>
+
+    <!-- SECTION 2: Confusion Matrix & Category Breaches -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- 混同行列 (Confusion Matrix) -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-        <div class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">正常プロンプト (ALLOW)</div>
-        <div class="mt-2 text-3xl font-extrabold text-emerald-400 font-mono" id="stat-allow">-</div>
-        <div class="mt-1 text-xs text-slate-500">過剰ブロック防止（False Positive）</div>
+        <h3 class="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
+          📊 判定混同行列 (Confusion Matrix)
+        </h3>
+        <p class="text-xs text-slate-500 mb-4">正解ラベルとガードレールの判定一致状況</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-center border-collapse">
+            <thead>
+              <tr>
+                <th class="p-2 border border-slate-800 bg-slate-950 text-xs text-slate-500"></th>
+                <th colspan="2" class="p-2 border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300">AIガードレールの判定結果</th>
+              </tr>
+              <tr class="text-xs text-slate-400 bg-slate-950/60">
+                <th class="p-2 border border-slate-800 text-slate-400">模範解答 (正解)</th>
+                <th class="p-2 border border-slate-800 text-rose-400">判定: BLOCK (遮断)</th>
+                <th class="p-2 border border-slate-800 text-emerald-400">判定: ALLOW (許可)</th>
+              </tr>
+            </thead>
+            <tbody class="text-sm font-mono">
+              <tr>
+                <td class="p-3 border border-slate-800 bg-slate-900 text-xs font-semibold text-rose-300">攻撃 (BLOCK)</td>
+                <td class="p-3 border border-slate-800 bg-emerald-950/30 text-emerald-400 font-bold" id="cm-tp">-<div class="text-[10px] font-sans font-normal text-emerald-500">正解 (防御成功)</div></td>
+                <td class="p-3 border border-slate-800 bg-rose-950/40 text-rose-400 font-bold" id="cm-fn">-<div class="text-[10px] font-sans font-normal text-rose-400">🚨 すり抜け (事故)</div></td>
+              </tr>
+              <tr>
+                <td class="p-3 border border-slate-800 bg-slate-900 text-xs font-semibold text-emerald-300">無害 (ALLOW)</td>
+                <td class="p-3 border border-slate-800 bg-amber-950/30 text-amber-400 font-bold" id="cm-fp">-<div class="text-[10px] font-sans font-normal text-amber-500">⚠️ 誤検知 (過剰防衛)</div></td>
+                <td class="p-3 border border-slate-800 bg-blue-950/30 text-blue-400 font-bold" id="cm-tn">-<div class="text-[10px] font-sans font-normal text-blue-500">正解 (正常通過)</div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between text-xs text-slate-400">
+          <span>平均判定レイテンシ: <strong id="eval-latency" class="text-slate-200 font-mono">-</strong> ms</span>
+          <span>総合精度 (Accuracy): <strong id="eval-acc-val" class="text-slate-200 font-mono">-</strong>%</span>
+        </div>
       </div>
+
+      <!-- カテゴリ別 攻撃突破率 (Breach Rates by Category) -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-        <div class="text-xs font-semibold text-blue-400 uppercase tracking-wider">稼働インフラ / クレジット</div>
-        <div class="mt-2 text-xl font-bold text-slate-200 font-mono">16 vCPU / 64GB</div>
-        <div class="mt-1 text-xs text-blue-400">GCP全体枠より自動相殺中</div>
+        <h3 class="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
+          🎯 カテゴリ別 攻撃突破率（どこが破られやすいか）
+        </h3>
+        <p class="text-xs text-slate-500 mb-4">攻撃手法ごとのガードレールすり抜け割合</p>
+        <div id="category-breach-list" class="space-y-3">
+          <div class="text-xs text-slate-500 text-center py-4">評価データを読み込み中...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Recent Breached Prompts (実例ピックアップ) -->
+    <div class="bg-slate-900 border border-rose-900/40 rounded-xl overflow-hidden shadow-sm mb-8">
+      <div class="p-5 border-b border-slate-800 bg-rose-950/10 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-rose-300 flex items-center gap-2">
+            🚨 攻撃すり抜け（突破された危険プロンプト実例）
+          </h3>
+          <p class="text-xs text-slate-400">本来BLOCKすべき攻撃であるにもかかわらず、ガードレールを騙してALLOW通過したプロンプト</p>
+        </div>
+        <span class="text-xs text-rose-400 font-mono bg-rose-500/10 px-2.5 py-1 rounded border border-rose-500/20">False Negatives</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <tr>
+              <th class="px-4 py-3 font-semibold">ID / 手法</th>
+              <th class="px-4 py-3 font-semibold">運用シナリオ</th>
+              <th class="px-4 py-3 font-semibold">突破されたプロンプト本文</th>
+              <th class="px-4 py-3 font-semibold">判定結果</th>
+            </tr>
+          </thead>
+          <tbody id="breaches-table-body" class="divide-y divide-slate-800 font-mono text-xs">
+            <tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">まだすり抜け事例はありません（または集計中）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Dataset Generation Overview -->
+    <div class="my-8">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            📦 ベンチマーク生成進捗（問題集の蓄積状況）
+          </h2>
+          <p class="text-xs text-slate-400">GCE（16 vCPU）上でQwen2.5が自律生成しているJ-GuardBenchデータセット</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">総生成レコード数</div>
+          <div class="mt-2 text-3xl font-extrabold text-white font-mono" id="stat-total">-</div>
+          <div class="mt-1 text-xs text-slate-500">10月30日まで連続生成中</div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+          <div class="text-xs font-semibold text-rose-400 uppercase tracking-wider">攻撃プロンプト (BLOCK)</div>
+          <div class="mt-2 text-3xl font-extrabold text-rose-400 font-mono" id="stat-block">-</div>
+          <div class="mt-1 text-xs text-slate-500">直接/間接/ツール乱用/脱獄</div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+          <div class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">正常プロンプト (ALLOW)</div>
+          <div class="mt-2 text-3xl font-extrabold text-emerald-400 font-mono" id="stat-allow">-</div>
+          <div class="mt-1 text-xs text-slate-500">過剰防衛テスト用の無害質問</div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+          <div class="text-xs font-semibold text-blue-400 uppercase tracking-wider">稼働インフラ / 枠</div>
+          <div class="mt-2 text-xl font-bold text-slate-200 font-mono">16 vCPU / 64GB</div>
+          <div class="mt-1 text-xs text-blue-400">GCPプロモーション枠内で完結</div>
+        </div>
       </div>
     </div>
 
@@ -114,8 +276,8 @@
     <!-- Live Records Table -->
     <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
       <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-slate-300">最新生成レコード（リアルタイム抜粋）</h3>
-        <span class="text-xs text-slate-500">直近の生成サンプルを表示中</span>
+        <h3 class="text-sm font-semibold text-slate-300">最新生成レコード（問題集抜粋）</h3>
+        <span class="text-xs text-slate-500">リアルタイム追加中</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm text-slate-300">
@@ -123,7 +285,7 @@
             <tr>
               <th class="px-4 py-3 font-semibold">ID / カテゴリ</th>
               <th class="px-4 py-3 font-semibold">シナリオ / 手法</th>
-              <th class="px-4 py-3 font-semibold">判定</th>
+              <th class="px-4 py-3 font-semibold">模範正解</th>
               <th class="px-4 py-3 font-semibold">入力プロンプト</th>
               <th class="px-4 py-3 font-semibold">判定の技術的根拠</th>
             </tr>
@@ -137,7 +299,6 @@
   </div>
 
   <script>
-    // SHA-256 hash for password: guardbench2026
     const EXPECTED_HASH = "2104cbf945345ed06db8ab76dcf84efe27f3617627e89511cf75917d749753d3";
 
     async function sha256(str) {
@@ -150,7 +311,7 @@
       const input = document.getElementById('password-input').value;
       const hash = await sha256(input);
       if (hash === EXPECTED_HASH) {
-        sessionStorage.setItem('jgb_auth', 'true');
+        localStorage.setItem("j_guardbench_auth", hash);
         showDashboard();
       } else {
         document.getElementById('auth-error').classList.remove('hidden');
@@ -158,7 +319,8 @@
     }
 
     function checkAuth() {
-      if (sessionStorage.getItem('jgb_auth') === 'true') {
+      const saved = localStorage.getItem("j_guardbench_auth");
+      if (saved === EXPECTED_HASH) {
         showDashboard();
       }
     }
@@ -167,111 +329,210 @@
       document.getElementById('auth-gate').classList.add('hidden');
       document.getElementById('dashboard-content').classList.remove('hidden');
       fetchStats();
-      setInterval(fetchStats, 10000);
+      setInterval(fetchStats, 60000); // 1分おき更新
     }
 
     function logout() {
-      sessionStorage.removeItem('jgb_auth');
+      localStorage.removeItem("j_guardbench_auth");
       location.reload();
     }
 
-    let catChart = null;
-    let sevChart = null;
+    let categoryChartInst = null;
+    let severityChartInst = null;
 
     async function fetchStats() {
       try {
-        const res = await fetch('./stats.json?t=' + Date.now());
-        if (!res.ok) throw new Error('Failed to load stats.json');
+        const res = await fetch(`stats.json?t=${Date.now()}`);
+        if (!res.ok) throw new Error("stats.json not found");
         const data = await res.json();
         renderDashboard(data);
-      } catch (err) {
-        console.warn('Failed to load stats.json:', err);
+      } catch (e) {
+        console.error("Failed to load stats.json:", e);
       }
     }
 
     function renderDashboard(data) {
-      document.getElementById('updated-at').textContent = data.updated_at || 'Just now';
+      document.getElementById('updated-at').textContent = data.updated_at || "N/A";
       document.getElementById('stat-total').textContent = (data.total_records || 0).toLocaleString();
-      document.getElementById('stat-block').textContent = ((data.labels && data.labels.BLOCK) || 0).toLocaleString();
-      document.getElementById('stat-allow').textContent = ((data.labels && data.labels.ALLOW) || 0).toLocaleString();
+      document.getElementById('stat-block').textContent = (data.labels?.BLOCK || 0).toLocaleString();
+      document.getElementById('stat-allow').textContent = (data.labels?.ALLOW || 0).toLocaleString();
 
-      // Category Chart
-      const catLabels = Object.keys(data.categories || {});
-      const catValues = Object.values(data.categories || {});
-      if (catChart) catChart.destroy();
-      catChart = new Chart(document.getElementById('categoryChart'), {
+      // Evaluation Section
+      const ev = data.evaluation;
+      if (ev) {
+        document.getElementById('eval-total').textContent = (ev.total_evaluated || 0).toLocaleString();
+        const m = ev.metrics || {};
+        const r = ev.rates || {};
+
+        document.getElementById('eval-fn').textContent = (m.false_negatives || 0).toLocaleString();
+        document.getElementById('eval-breach-rate').textContent = `(${r.breach_rate || 0}% 突破)`;
+
+        document.getElementById('eval-fp').textContent = (m.false_positives || 0).toLocaleString();
+        document.getElementById('eval-fp-rate').textContent = `(${r.false_block_rate || 0}% 誤遮断)`;
+
+        document.getElementById('eval-tp').textContent = (m.true_positives || 0).toLocaleString();
+        document.getElementById('eval-defense-rate').textContent = `(${r.defense_rate || 0}% 防御)`;
+
+        document.getElementById('eval-tn').textContent = (m.true_negatives || 0).toLocaleString();
+        document.getElementById('eval-accuracy').textContent = `(${r.benign_pass_rate || 0}% 通過)`;
+
+        // Confusion Matrix
+        document.getElementById('cm-tp').innerHTML = `${m.true_positives || 0}<div class="text-[10px] font-sans font-normal text-emerald-500">正解 (防御成功)</div>`;
+        document.getElementById('cm-fn').innerHTML = `${m.false_negatives || 0}<div class="text-[10px] font-sans font-normal text-rose-400">🚨 すり抜け (事故)</div>`;
+        document.getElementById('cm-fp').innerHTML = `${m.false_positives || 0}<div class="text-[10px] font-sans font-normal text-amber-500">⚠️ 誤検知 (過剰防衛)</div>`;
+        document.getElementById('cm-tn').innerHTML = `${m.true_negatives || 0}<div class="text-[10px] font-sans font-normal text-blue-500">正解 (正常通過)</div>`;
+
+        document.getElementById('eval-latency').textContent = ev.avg_latency_ms || 0;
+        document.getElementById('eval-acc-val').textContent = r.overall_accuracy || 0;
+
+        // Category breakdown
+        renderCategoryBreaches(ev.category_breakdown || {});
+
+        // Recent breaches table
+        renderBreachesTable(ev.recent_breaches || []);
+      }
+
+      // Charts
+      renderCharts(data.categories || {}, data.severities || {});
+
+      // Latest Records Table
+      renderRecordsTable(data.latest_records || []);
+    }
+
+    function renderCategoryBreaches(breakdown) {
+      const container = document.getElementById('category-breach-list');
+      const cats = Object.keys(breakdown);
+      if (cats.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">評価データを集計中...</div>';
+        return;
+      }
+
+      let html = '';
+      for (const [cat, item] of Object.entries(breakdown)) {
+        const rate = item.breach_rate || 0;
+        const color = rate > 20 ? 'bg-rose-500' : (rate > 0 ? 'bg-amber-500' : 'bg-emerald-500');
+        html += `
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-medium text-slate-300">${cat}</span>
+              <span class="font-mono text-slate-400">突破: <strong class="text-rose-400">${item.breached}</strong> / ${item.total} (${rate}%)</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div class="${color} h-2 rounded-full transition-all duration-500" style="width: ${rate}%"></div>
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function renderBreachesTable(breaches) {
+      const tbody = document.getElementById('breaches-table-body');
+      if (breaches.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">現在、攻撃のすり抜けは確認されていません</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = breaches.map(b => `
+        <tr class="hover:bg-slate-900/60 transition">
+          <td class="px-4 py-3 whitespace-nowrap">
+            <span class="text-rose-400 font-bold">${b.id}</span>
+            <div class="text-[10px] text-slate-500 font-sans">${b.attack_vector || '-'}</div>
+          </td>
+          <td class="px-4 py-3 font-sans text-slate-300 max-w-[200px] truncate">${b.scenario || '-'}</td>
+          <td class="px-4 py-3 font-sans text-slate-200">
+            <div class="max-w-xl line-clamp-2 hover:line-clamp-none transition cursor-pointer" title="${escapeHtml(b.prompt)}">${escapeHtml(b.prompt)}</div>
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              正解:${b.target_label} → 判定:${b.predicted_label}
+            </span>
+            <div class="text-[10px] text-slate-500 mt-0.5">${b.latency_ms || 0}ms</div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderCharts(categories, severities) {
+      const ctxCat = document.getElementById('categoryChart').getContext('2d');
+      if (categoryChartInst) categoryChartInst.destroy();
+      categoryChartInst = new Chart(ctxCat, {
         type: 'doughnut',
         data: {
-          labels: catLabels,
+          labels: Object.keys(categories),
           datasets: [{
-            data: catValues,
-            backgroundColor: ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#10b981'],
-            borderWidth: 0
+            data: Object.values(categories),
+            backgroundColor: ['#ef4444', '#f97316', '#eab308', '#8b5cf6', '#10b981'],
+            borderColor: '#0f172a',
+            borderWidth: 2
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } } }
+          plugins: {
+            legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } }
+          }
         }
       });
 
-      // Severity Chart
-      const sevLabels = Object.keys(data.severities || {});
-      const sevValues = Object.values(data.severities || {});
-      if (sevChart) sevChart.destroy();
-      sevChart = new Chart(document.getElementById('severityChart'), {
+      const ctxSev = document.getElementById('severityChart').getContext('2d');
+      if (severityChartInst) severityChartInst.destroy();
+      severityChartInst = new Chart(ctxSev, {
         type: 'bar',
         data: {
-          labels: sevLabels,
+          labels: Object.keys(severities),
           datasets: [{
             label: '件数',
-            data: sevValues,
-            backgroundColor: '#3b82f6',
-            borderRadius: 4
+            data: Object.values(severities),
+            backgroundColor: ['#dc2626', '#f87171', '#fbbf24', '#34d399'],
+            borderRadius: 6
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
           scales: {
             x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
             y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
-          },
-          plugins: { legend: { display: false } }
+          }
         }
       });
+    }
 
-      // Table
+    function renderRecordsTable(records) {
       const tbody = document.getElementById('records-table-body');
-      tbody.innerHTML = '';
-      (data.latest_records || []).forEach(r => {
-        const isBlock = r.target_label === 'BLOCK';
-        const badge = isBlock 
-          ? '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">BLOCK</span>'
-          : '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ALLOW</span>';
+      if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">レコードがありません</td></tr>';
+        return;
+      }
 
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-slate-800/50 transition';
-        row.innerHTML = `
-          <td class="px-4 py-3 align-top whitespace-nowrap">
-            <div class="font-mono text-xs font-medium text-blue-400">${r.id}</div>
-            <div class="text-xs text-slate-400">${r.category}</div>
-          </td>
-          <td class="px-4 py-3 align-top whitespace-nowrap">
-            <div class="text-xs text-slate-200">${r.scenario}</div>
-            <div class="text-xs text-slate-500 font-mono">${r.attack_vector}</div>
-          </td>
-          <td class="px-4 py-3 align-top whitespace-nowrap">${badge}</td>
-          <td class="px-4 py-3 align-top">
-            <div class="text-xs text-slate-200 line-clamp-2 hover:line-clamp-none font-mono bg-slate-950/40 p-2 rounded border border-slate-800">${escapeHtml(r.prompt)}</div>
-          </td>
-          <td class="px-4 py-3 align-top">
-            <div class="text-xs text-slate-400 line-clamp-2 hover:line-clamp-none">${escapeHtml(r.rationale)}</div>
-          </td>
+      tbody.innerHTML = records.map(r => {
+        const isBlock = r.target_label === 'BLOCK';
+        const badgeClass = isBlock ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+        return `
+          <tr class="hover:bg-slate-900/40 transition">
+            <td class="px-4 py-3 whitespace-nowrap">
+              <div class="font-mono text-xs font-semibold text-slate-200">${r.id}</div>
+              <div class="text-[11px] text-slate-500">${r.category}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-xs text-slate-300">${r.scenario}</div>
+              <div class="text-[11px] text-slate-500 font-mono">${r.attack_vector}</div>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="inline-flex px-2 py-0.5 rounded text-xs font-bold border ${badgeClass}">${r.target_label}</span>
+            </td>
+            <td class="px-4 py-3 max-w-xs">
+              <div class="text-xs text-slate-300 line-clamp-2 hover:line-clamp-none transition cursor-pointer" title="${escapeHtml(r.prompt)}">${escapeHtml(r.prompt)}</div>
+            </td>
+            <td class="px-4 py-3 max-w-sm">
+              <div class="text-xs text-slate-400 line-clamp-2 hover:line-clamp-none transition cursor-pointer" title="${escapeHtml(r.rationale || '')}">${escapeHtml(r.rationale || '-')}</div>
+            </td>
+          </tr>
         `;
-        tbody.appendChild(row);
-      });
+      }).join('');
     }
 
     function escapeHtml(str) {
@@ -279,7 +540,7 @@
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    checkAuth();
+    window.addEventListener('DOMContentLoaded', checkAuth);
   </script>
 </body>
 </html>
