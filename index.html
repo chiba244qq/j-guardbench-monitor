@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>J-GuardBench Security & Live Monitor</title>
+  <title>J-GuardBench Security & Live Monitor (RBAC Edition)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -33,7 +33,7 @@
         </span>
         <div>
           <h2 class="text-xl font-bold text-white">限定公開ダッシュボード</h2>
-          <p class="text-xs text-slate-400">J-GuardBench Live Security Monitor</p>
+          <p class="text-xs text-slate-400">J-GuardBench v2 (RBAC Role-Aware Edition)</p>
         </div>
       </div>
       <form onsubmit="handleAuth(event)" class="space-y-4">
@@ -61,11 +61,14 @@
           <div>
             <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
               J-GuardBench Live Security Monitor
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                RBAC v2 Role-Aware
+              </span>
               <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Benchmarking Active
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active
               </span>
             </h1>
-            <p class="text-sm text-slate-400">日本語AIエージェント・LLM向けプロンプトインジェクション防御評価＆攻撃突破分析</p>
+            <p class="text-sm text-slate-400">日本語AIエージェント・LLM向け「ロール権限（RBAC）」連動プロンプトインジェクション防御評価</p>
           </div>
         </div>
       </div>
@@ -76,14 +79,14 @@
       </div>
     </header>
 
-    <!-- SECTION 1: Defense & Attack Breach Metrics (KEY FOCUS) -->
+    <!-- SECTION 1: Defense & Attack Breach Metrics -->
     <div class="my-8">
       <div class="flex items-center justify-between mb-4">
         <div>
           <h2 class="text-lg font-bold text-white flex items-center gap-2">
             🛡️ AIガードレール実機評価（攻撃突破 vs 誤検知）
           </h2>
-          <p class="text-xs text-slate-400">生成されたプロンプトをAIガードレール（Qwen2.5 / 決定論エンジン）に投入し、実際に遮断できたかを採点中</p>
+          <p class="text-xs text-slate-400">ユーザーロールと権限スコープ（RBAC）を踏まえ、ガードレールが遮断できたかを自動採点中</p>
         </div>
         <div class="text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
           採点済: <span id="eval-total" class="font-mono font-bold text-white">-</span> 件
@@ -114,7 +117,7 @@
             <div class="text-3xl font-extrabold text-amber-400 font-mono" id="eval-fp">-</div>
             <span class="text-xs text-amber-300/80 font-mono" id="eval-fp-rate">(-%)</span>
           </div>
-          <p class="mt-1 text-xs text-slate-400">無害な業務・学習入力を誤って遮断した業務阻害数</p>
+          <p class="mt-1 text-xs text-slate-400">権限内の正当な問い合わせを誤って遮断した業務阻害数</p>
         </div>
 
         <!-- 3. 防御成功 (True Positive) -->
@@ -127,7 +130,7 @@
             <div class="text-3xl font-extrabold text-emerald-400 font-mono" id="eval-tp">-</div>
             <span class="text-xs text-emerald-300/80 font-mono" id="eval-defense-rate">(-%)</span>
           </div>
-          <p class="mt-1 text-xs text-slate-400">攻撃プロンプトを正常に検知・ブロック完了</p>
+          <p class="mt-1 text-xs text-slate-400">権限外の要求・攻撃プロンプトを正常に検知・ブロック完了</p>
         </div>
 
         <!-- 4. 正常通過 (True Negative) -->
@@ -140,60 +143,71 @@
             <div class="text-3xl font-extrabold text-blue-400 font-mono" id="eval-tn">-</div>
             <span class="text-xs text-blue-300/80 font-mono" id="eval-accuracy">(-%)</span>
           </div>
-          <p class="mt-1 text-xs text-slate-400">無害な一般入力を正常に受け入れて回答を提供</p>
+          <p class="mt-1 text-xs text-slate-400">ユーザーの権限範囲内の正当な入力を正常に受け入れ</p>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 2: Confusion Matrix & Category Breaches -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- SECTION 2: Confusion Matrix & Category / Role Breaches -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       <!-- 混同行列 (Confusion Matrix) -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
         <h3 class="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
           📊 判定混同行列 (Confusion Matrix)
         </h3>
-        <p class="text-xs text-slate-500 mb-4">正解ラベルとガードレールの判定一致状況</p>
+        <p class="text-xs text-slate-500 mb-4">模範正解とガードレールの判定一致状況</p>
         <div class="overflow-x-auto">
           <table class="w-full text-center border-collapse">
             <thead>
               <tr>
                 <th class="p-2 border border-slate-800 bg-slate-950 text-xs text-slate-500"></th>
-                <th colspan="2" class="p-2 border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300">AIガードレールの判定結果</th>
+                <th colspan="2" class="p-2 border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300">判定結果</th>
               </tr>
               <tr class="text-xs text-slate-400 bg-slate-950/60">
-                <th class="p-2 border border-slate-800 text-slate-400">模範解答 (正解)</th>
-                <th class="p-2 border border-slate-800 text-rose-400">判定: BLOCK (遮断)</th>
-                <th class="p-2 border border-slate-800 text-emerald-400">判定: ALLOW (許可)</th>
+                <th class="p-2 border border-slate-800 text-slate-400">正解</th>
+                <th class="p-2 border border-slate-800 text-rose-400 font-bold">BLOCK</th>
+                <th class="p-2 border border-slate-800 text-emerald-400 font-bold">ALLOW</th>
               </tr>
             </thead>
             <tbody class="text-sm font-mono">
               <tr>
-                <td class="p-3 border border-slate-800 bg-slate-900 text-xs font-semibold text-rose-300">攻撃 (BLOCK)</td>
-                <td class="p-3 border border-slate-800 bg-emerald-950/30 text-emerald-400 font-bold" id="cm-tp">-<div class="text-[10px] font-sans font-normal text-emerald-500">正解 (防御成功)</div></td>
-                <td class="p-3 border border-slate-800 bg-rose-950/40 text-rose-400 font-bold" id="cm-fn">-<div class="text-[10px] font-sans font-normal text-rose-400">🚨 すり抜け (事故)</div></td>
+                <td class="p-3 border border-slate-800 bg-slate-900 text-xs font-semibold text-rose-300">BLOCK</td>
+                <td class="p-3 border border-slate-800 bg-emerald-950/30 text-emerald-400 font-bold" id="cm-tp">-<div class="text-[10px] font-sans font-normal text-emerald-500">正解(防御)</div></td>
+                <td class="p-3 border border-slate-800 bg-rose-950/40 text-rose-400 font-bold" id="cm-fn">-<div class="text-[10px] font-sans font-normal text-rose-400">🚨 すり抜け</div></td>
               </tr>
               <tr>
-                <td class="p-3 border border-slate-800 bg-slate-900 text-xs font-semibold text-emerald-300">無害 (ALLOW)</td>
-                <td class="p-3 border border-slate-800 bg-amber-950/30 text-amber-400 font-bold" id="cm-fp">-<div class="text-[10px] font-sans font-normal text-amber-500">⚠️ 誤検知 (過剰防衛)</div></td>
-                <td class="p-3 border border-slate-800 bg-blue-950/30 text-blue-400 font-bold" id="cm-tn">-<div class="text-[10px] font-sans font-normal text-blue-500">正解 (正常通過)</div></td>
+                <td class="p-3 border border-slate-800 bg-slate-900 text-xs font-semibold text-emerald-300">ALLOW</td>
+                <td class="p-3 border border-slate-800 bg-amber-950/30 text-amber-400 font-bold" id="cm-fp">-<div class="text-[10px] font-sans font-normal text-amber-500">⚠️ 誤検知</div></td>
+                <td class="p-3 border border-slate-800 bg-blue-950/30 text-blue-400 font-bold" id="cm-tn">-<div class="text-[10px] font-sans font-normal text-blue-500">正解(通過)</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between text-xs text-slate-400">
-          <span>平均判定レイテンシ: <strong id="eval-latency" class="text-slate-200 font-mono">-</strong> ms</span>
-          <span>総合精度 (Accuracy): <strong id="eval-acc-val" class="text-slate-200 font-mono">-</strong>%</span>
+          <span>平均レイテンシ: <strong id="eval-latency" class="text-slate-200 font-mono">-</strong> ms</span>
+          <span>総合精度: <strong id="eval-acc-val" class="text-slate-200 font-mono">-</strong>%</span>
         </div>
       </div>
 
       <!-- カテゴリ別 攻撃突破率 (Breach Rates by Category) -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
         <h3 class="text-sm font-semibold text-slate-300 mb-1 flex items-center gap-2">
-          🎯 カテゴリ別 攻撃突破率（どこが破られやすいか）
+          🎯 カテゴリ別 攻撃突破率
         </h3>
         <p class="text-xs text-slate-500 mb-4">攻撃手法ごとのガードレールすり抜け割合</p>
         <div id="category-breach-list" class="space-y-3">
           <div class="text-xs text-slate-500 text-center py-4">評価データを読み込み中...</div>
+        </div>
+      </div>
+
+      <!-- ロール別 (RBAC) 攻撃突破率 (NEW!) -->
+      <div class="bg-slate-900 border border-purple-900/40 rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-semibold text-purple-300 mb-1 flex items-center gap-2">
+          👤 ユーザーロール別 突破率 (RBAC)
+        </h3>
+        <p class="text-xs text-slate-500 mb-4">どの発信元ロールの攻撃が欺きやすいか</p>
+        <div id="role-breach-list" class="space-y-3">
+          <div class="text-xs text-slate-500 text-center py-4">ロール別データを集計中...</div>
         </div>
       </div>
     </div>
@@ -205,7 +219,7 @@
           <h3 class="text-sm font-bold text-rose-300 flex items-center gap-2">
             🚨 攻撃すり抜け（突破された危険プロンプト実例）
           </h3>
-          <p class="text-xs text-slate-400">本来BLOCKすべき攻撃であるにもかかわらず、ガードレールを騙してALLOW通過したプロンプト</p>
+          <p class="text-xs text-slate-400">本来BLOCKすべき攻撃であるにもかかわらず、権限スコープを騙してALLOW通過したプロンプト</p>
         </div>
         <span class="text-xs text-rose-400 font-mono bg-rose-500/10 px-2.5 py-1 rounded border border-rose-500/20">False Negatives</span>
       </div>
@@ -214,13 +228,14 @@
           <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
             <tr>
               <th class="px-4 py-3 font-semibold">ID / 手法</th>
-              <th class="px-4 py-3 font-semibold">運用シナリオ</th>
+              <th class="px-4 py-3 font-semibold">発信元ロール (RBAC)</th>
+              <th class="px-4 py-3 font-semibold">シナリオ</th>
               <th class="px-4 py-3 font-semibold">突破されたプロンプト本文</th>
               <th class="px-4 py-3 font-semibold">判定結果</th>
             </tr>
           </thead>
           <tbody id="breaches-table-body" class="divide-y divide-slate-800 font-mono text-xs">
-            <tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">まだすり抜け事例はありません（または集計中）</td></tr>
+            <tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">まだすり抜け事例はありません（または集計中）</td></tr>
           </tbody>
         </table>
       </div>
@@ -250,7 +265,7 @@
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
           <div class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">正常プロンプト (ALLOW)</div>
           <div class="mt-2 text-3xl font-extrabold text-emerald-400 font-mono" id="stat-allow">-</div>
-          <div class="mt-1 text-xs text-slate-500">過剰防衛テスト用の無害質問</div>
+          <div class="mt-1 text-xs text-slate-500">権限内テスト用の無害質問</div>
         </div>
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
           <div class="text-xs font-semibold text-blue-400 uppercase tracking-wider">稼働インフラ / 枠</div>
@@ -287,14 +302,15 @@
           <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
             <tr>
               <th class="px-4 py-3 font-semibold">ID / カテゴリ</th>
+              <th class="px-4 py-3 font-semibold">ロール (RBAC)</th>
               <th class="px-4 py-3 font-semibold">シナリオ / 手法</th>
               <th class="px-4 py-3 font-semibold">模範正解</th>
               <th class="px-4 py-3 font-semibold">入力プロンプト</th>
-              <th class="px-4 py-3 font-semibold">判定の技術的根拠</th>
+              <th class="px-4 py-3 font-semibold">権限境界の技術的根拠</th>
             </tr>
           </thead>
           <tbody id="records-table-body" class="divide-y divide-slate-800">
-            <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">データを読み込み中...</td></tr>
+            <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">データを読み込み中...</td></tr>
           </tbody>
         </table>
       </div>
@@ -332,7 +348,7 @@
       document.getElementById('auth-gate').classList.add('hidden');
       document.getElementById('dashboard-content').classList.remove('hidden');
       fetchStats();
-      setInterval(fetchStats, 60000); // 1分おき更新
+      setInterval(fetchStats, 60000);
     }
 
     function logout() {
@@ -391,6 +407,9 @@
         // Category breakdown
         renderCategoryBreaches(ev.category_breakdown || {});
 
+        // Role breakdown (RBAC)
+        renderRoleBreaches(ev.role_breakdown || {});
+
         // Recent breaches table
         renderBreachesTable(ev.recent_breaches || []);
       }
@@ -429,10 +448,45 @@
       container.innerHTML = html;
     }
 
+    function renderRoleBreaches(breakdown) {
+      const container = document.getElementById('role-breach-list');
+      const roles = Object.keys(breakdown);
+      if (roles.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">ロール別データを集計中...</div>';
+        return;
+      }
+
+      let html = '';
+      for (const [role, item] of Object.entries(breakdown)) {
+        const rate = item.breach_rate || 0;
+        const color = rate > 30 ? 'bg-rose-500' : (rate > 0 ? 'bg-purple-500' : 'bg-emerald-500');
+        html += `
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-semibold text-purple-300 font-mono">${getRoleBadge(role)}</span>
+              <span class="font-mono text-slate-400">突破: <strong class="text-rose-400">${item.breached}</strong> / ${item.total} (${rate}%)</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div class="${color} h-2 rounded-full transition-all duration-500" style="width: ${rate}%"></div>
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function getRoleBadge(role) {
+      if (role === 'anonymous') return '<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700">未認証 (anonymous)</span>';
+      if (role === 'customer') return '<span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-900/40 text-blue-300 border border-blue-700/50">顧客 (customer)</span>';
+      if (role === 'employee') return '<span class="px-1.5 py-0.5 rounded text-[10px] bg-teal-900/40 text-teal-300 border border-teal-700/50">一般社員 (employee)</span>';
+      if (role === 'system_admin') return '<span class="px-1.5 py-0.5 rounded text-[10px] bg-purple-900/40 text-purple-300 border border-purple-700/50">管理者 (admin)</span>';
+      return `<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-500">${role}</span>`;
+    }
+
     function renderBreachesTable(breaches) {
       const tbody = document.getElementById('breaches-table-body');
       if (breaches.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">現在、攻撃のすり抜けは確認されていません</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">現在、攻撃のすり抜けは確認されていません</td></tr>';
         return;
       }
 
@@ -442,9 +496,12 @@
             <span class="text-rose-400 font-bold">${b.id}</span>
             <div class="text-[10px] text-slate-500 font-sans">${b.attack_vector || '-'}</div>
           </td>
-          <td class="px-4 py-3 font-sans text-slate-300 max-w-[200px] truncate">${b.scenario || '-'}</td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            ${getRoleBadge(b.user_role || 'unspecified')}
+          </td>
+          <td class="px-4 py-3 font-sans text-slate-300 max-w-[180px] truncate">${b.scenario || '-'}</td>
           <td class="px-4 py-3 font-sans text-slate-200">
-            <div class="max-w-xl line-clamp-2 hover:line-clamp-none transition cursor-pointer" title="${escapeHtml(b.prompt)}">${escapeHtml(b.prompt)}</div>
+            <div class="max-w-md line-clamp-2 hover:line-clamp-none transition cursor-pointer" title="${escapeHtml(b.prompt)}">${escapeHtml(b.prompt)}</div>
           </td>
           <td class="px-4 py-3 whitespace-nowrap">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
@@ -507,7 +564,7 @@
     function renderRecordsTable(records) {
       const tbody = document.getElementById('records-table-body');
       if (!records || records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">レコードがありません</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">レコードがありません</td></tr>';
         return;
       }
 
@@ -519,6 +576,9 @@
             <td class="px-4 py-3 whitespace-nowrap">
               <div class="font-mono text-xs font-semibold text-slate-200">${r.id}</div>
               <div class="text-[11px] text-slate-500">${r.category}</div>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              ${getRoleBadge(r.user_role || 'unspecified')}
             </td>
             <td class="px-4 py-3">
               <div class="text-xs text-slate-300">${r.scenario}</div>
