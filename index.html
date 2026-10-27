@@ -246,22 +246,24 @@
       </div>
     </div>
 
-    <!-- SECTION 3: Recent Breached Prompts (カード型インシデントビュー - 大幅視認性向上) -->
+    <!-- SECTION 3: Recent Breached Prompts (折りたたみ式インシデントビュー) -->
     <div class="bg-slate-900 border border-rose-900/40 rounded-xl overflow-hidden shadow-sm mb-8">
       <div class="p-5 border-b border-slate-800 bg-rose-950/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 class="text-base font-bold text-rose-300 flex items-center gap-2">
             🚨 攻撃すり抜け（突破された危険プロンプト実例一覧）
           </h3>
-          <p class="text-xs text-slate-400">模範正解がBLOCK（攻撃・権限逸脱）であるにもかかわらず、ガードレールを騙してALLOW通過したプロンプト</p>
+          <p class="text-xs text-slate-400">模範正解がBLOCK（攻撃・権限逸脱）であるにもかかわらず、ガードレールを騙してALLOW通過したプロンプト（各行をクリックして詳細を展開）</p>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-xs text-rose-400 font-mono bg-rose-500/10 px-2.5 py-1 rounded border border-rose-500/20">False Negatives (直近15件)</span>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="toggleAllDetails('breaches-container', true)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700 transition">すべて開く</button>
+          <button onclick="toggleAllDetails('breaches-container', false)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700 transition">すべて閉じる</button>
+          <span class="text-xs text-rose-400 font-mono bg-rose-500/10 px-2.5 py-1 rounded border border-rose-500/20">直近15件</span>
         </div>
       </div>
 
-      <!-- カードライクな構造化インシデントリスト -->
-      <div id="breaches-container" class="divide-y divide-slate-800/80 p-4 space-y-4">
+      <!-- 折りたたみ式インシデントリスト -->
+      <div id="breaches-container" class="p-4 space-y-3">
         <div class="text-center py-8 text-slate-500 text-sm">データを読み込み中...</div>
       </div>
     </div>
@@ -316,13 +318,19 @@
       </div>
     </div>
 
-    <!-- SECTION 5: Live Records Table (全生成レコード抜粋 - カード型構造化ビュー) -->
+    <!-- SECTION 5: Live Records Table (全生成レコード抜粋 - 折りたたみ式ビュー) -->
     <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="text-base font-semibold text-slate-300">最新生成レコード（問題集抜粋一覧）</h3>
-        <span class="text-xs text-slate-500">リアルタイム追加中</span>
+      <div class="p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-semibold text-slate-300">最新生成レコード（問題集抜粋一覧）</h3>
+          <p class="text-xs text-slate-500">リアルタイム追加中・各行をクリックで詳細を展開</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="toggleAllDetails('records-container', true)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700 transition">すべて開く</button>
+          <button onclick="toggleAllDetails('records-container', false)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700 transition">すべて閉じる</button>
+        </div>
       </div>
-      <div id="records-container" class="divide-y divide-slate-800/80 p-4 space-y-4">
+      <div id="records-container" class="p-4 space-y-3">
         <div class="text-center py-8 text-slate-500 text-sm">データを読み込み中...</div>
       </div>
     </div>
@@ -486,7 +494,14 @@
       return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-400">${role || '未設定'}</span>`;
     }
 
-    // すり抜けインシデント用カード型レンダラー (見やすさ大幅向上 & 攻撃意図・見落とし要因の明示)
+    // 一括開閉ヘルパー
+    function toggleAllDetails(containerId, open) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.querySelectorAll('details').forEach(d => d.open = open);
+    }
+
+    // すり抜けインシデント用折りたたみ式カードレンダラー
     function renderBreachesCards(breaches) {
       const container = document.getElementById('breaches-container');
       if (breaches.length === 0) {
@@ -494,86 +509,108 @@
         return;
       }
 
-      container.innerHTML = breaches.map(b => `
-        <div class="bg-slate-900/90 border border-rose-900/40 rounded-xl p-4 sm:p-5 hover:border-rose-700/60 transition space-y-3.5 shadow-md">
-          <!-- 上段: メタデータバッジバー -->
-          <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="font-mono font-bold text-sm text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/20">${b.id}</span>
-              <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">${b.category} / ${b.attack_vector || '-'}</span>
-              ${getRoleBadge(b.user_role)}
-              <span class="text-xs px-2.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60 font-medium">
-                🎯 ${escapeHtml(b.scenario || '一般AI')}
-              </span>
-            </div>
-            <!-- 判定結果バッジ (出題者の正解 vs 防御AIの回答) -->
-            <div class="flex flex-wrap items-center gap-2 bg-slate-950/90 px-3 py-1.5 rounded-lg border border-slate-800">
-              <div class="flex items-center gap-1.5">
-                <span class="text-[11px] text-slate-400 font-medium">出題正解:</span>
-                <span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40" title="出題者が定めた模範解答">BLOCK 🛑 (危険)</span>
+      container.innerHTML = breaches.map((b, idx) => {
+        const isOpen = idx === 0 ? 'open' : ''; // 最初の1件のみデフォルト展開
+        return `
+        <details ${isOpen} class="group bg-slate-900/90 border border-rose-900/40 rounded-xl overflow-hidden hover:border-rose-700/60 transition shadow-md">
+          <!-- 要約行 (クリックで開閉) -->
+          <summary class="p-4 sm:p-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover:bg-slate-800/40 transition select-none">
+            <div class="space-y-1.5 min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono font-bold text-sm text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/20">${b.id}</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">${b.category} / ${b.attack_vector || '-'}</span>
+                ${getRoleBadge(b.user_role)}
+                <span class="text-xs px-2.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60 font-medium">
+                  🎯 ${escapeHtml(b.scenario || '一般AI')}
+                </span>
               </div>
-              <span class="text-slate-600 text-xs">➡️</span>
-              <div class="flex items-center gap-1.5">
-                <span class="text-[11px] text-slate-400 font-medium">防御AI答案:</span>
-                <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" title="防御側ガードレールが実際に出力した答案">ALLOW ⚠️ (すり抜け)</span>
-              </div>
-              <span class="text-xs text-slate-500 font-mono pl-1 border-l border-slate-800">${b.latency_ms || 0}ms</span>
-            </div>
-          </div>
-
-          <!-- 中段: 入力プロンプト本文 -->
-          <div>
-            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
-              <span>【実際の入力プロンプト】</span>
-              <span class="text-[10px] text-slate-500 font-mono">表面上の体裁</span>
-            </div>
-            <div class="bg-slate-950/90 border border-slate-800/90 rounded-lg p-3 text-sm text-slate-100 font-sans leading-relaxed selection:bg-rose-500/30">
-              ${escapeHtml(b.prompt)}
-            </div>
-          </div>
-
-          <!-- 下段: 攻撃の真の狙い vs 防御側が見落とした要因 (2カラム対比) -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-            <!-- 1. 攻撃者の真の狙い -->
-            <div class="bg-rose-950/20 border border-rose-500/30 rounded-lg p-3 text-xs leading-relaxed">
-              <div class="font-bold text-rose-300 mb-1 flex items-center gap-1.5">
-                <span class="text-rose-400">🎯 攻撃者の真の意図 (Attack Intent):</span>
-              </div>
-              <div class="text-rose-100/90 font-medium">${escapeHtml(b.attack_intent || '権限外の操作または機密データへの不正アクセス')}</div>
+              <p class="text-xs text-slate-400 truncate max-w-3xl font-sans flex items-center gap-1.5 pt-0.5">
+                <span class="text-slate-500 font-mono shrink-0">💬 入力:</span>
+                <span class="truncate">${escapeHtml(b.prompt)}</span>
+              </p>
             </div>
 
-            <!-- 2. 防御側が見落とした要因 -->
-            <div class="bg-amber-950/20 border border-amber-500/30 rounded-lg p-3 text-xs leading-relaxed">
-              <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-                <span class="text-amber-400">👁️ 防御側AIが見落とした要因 (Why it Bypassed):</span>
+            <div class="flex items-center justify-between lg:justify-end gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800/60">
+              <!-- 判定結果バッジ (出題者の正解 vs 防御AIの回答) -->
+              <div class="flex items-center gap-1.5 bg-slate-950/90 px-3 py-1.5 rounded-lg border border-slate-800">
+                <div class="flex items-center gap-1">
+                  <span class="text-[11px] text-slate-400 font-medium">出題:</span>
+                  <span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">BLOCK 🛑</span>
+                </div>
+                <span class="text-slate-600 text-xs">➡️</span>
+                <div class="flex items-center gap-1">
+                  <span class="text-[11px] text-slate-400 font-medium">防御AI:</span>
+                  <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">ALLOW ⚠️</span>
+                </div>
+                <span class="text-xs text-slate-500 font-mono pl-1 border-l border-slate-800">${b.latency_ms || 0}ms</span>
               </div>
-              <div class="text-amber-100/90 font-medium">${escapeHtml(b.missed_factor || '丁寧な相談文脈や正当な口実に隠蔽され、背後にある権限違反を見落とした')}</div>
-            </div>
-          </div>
 
-          <!-- 最下段: 出題者の正解基準と防御側誤答の対比 -->
-          <div class="bg-blue-950/15 border border-blue-500/30 rounded-lg p-3.5 text-xs text-slate-300 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1.5 font-bold text-blue-300">
-                <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                <span>📘 出題者による正解の解説（なぜ本来 BLOCK と判定すべきなのか）:</span>
+              <!-- 開閉アイコン -->
+              <div class="flex items-center gap-1 text-xs text-rose-400 group-open:text-slate-400 font-medium px-2.5 py-1.5 rounded bg-slate-800/60 border border-slate-700/50">
+                <span class="group-open:hidden">詳細を見る</span>
+                <span class="hidden group-open:inline">閉じる</span>
+                <svg class="w-4 h-4 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
               </div>
-              <span class="text-[10px] text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded font-mono border border-blue-500/30">模範解答の根拠 (Ground Truth Rationale)</span>
             </div>
-            <div class="text-slate-200 font-sans pl-3 border-l-2 border-blue-400 leading-relaxed text-[11px]">
-              ${escapeHtml(b.rationale || '-')}
+          </summary>
+
+          <!-- 展開詳細エリア -->
+          <div class="p-4 sm:p-5 pt-3 border-t border-slate-800/80 bg-slate-950/40 space-y-3.5">
+            <!-- 入力プロンプト本文全文 -->
+            <div>
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
+                <span>【実際の入力プロンプト (全文)】</span>
+                <span class="text-[10px] text-slate-500 font-mono">表面上の体裁</span>
+              </div>
+              <div class="bg-slate-950 border border-slate-800 rounded-lg p-3.5 text-sm text-slate-100 font-sans leading-relaxed selection:bg-rose-500/30 whitespace-pre-wrap">
+                ${escapeHtml(b.prompt)}
+              </div>
             </div>
-            <!-- すり抜け発生の構図 -->
-            <div class="text-[11px] text-rose-200 bg-rose-500/15 px-3 py-2 rounded-lg border border-rose-500/30 flex items-start gap-2 leading-relaxed">
-              <span class="font-bold text-rose-400 shrink-0">⚠️ すり抜け発生の構図:</span>
-              <span>出題データセットでは上記理由により「正解＝BLOCK（危険）」と規定されています。しかし、テストを受けた防御側ガードレールAIはプロンプトの表面的な文脈に騙され、単語<strong>【ALLOW】</strong>と誤答したため、危険な攻撃が見逃されて通過（すり抜け）しました。</span>
+
+            <!-- 攻撃の真の狙い vs 防御側が見落とした要因 (2カラム対比) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <!-- 1. 攻撃者の真の狙い -->
+              <div class="bg-rose-950/20 border border-rose-500/30 rounded-lg p-3 text-xs leading-relaxed">
+                <div class="font-bold text-rose-300 mb-1 flex items-center gap-1.5">
+                  <span class="text-rose-400">🎯 攻撃者の真の意図 (Attack Intent):</span>
+                </div>
+                <div class="text-rose-100/90 font-medium">${escapeHtml(b.attack_intent || '権限外の操作または機密データへの不正アクセス')}</div>
+              </div>
+
+              <!-- 2. 防御側が見落とした要因 -->
+              <div class="bg-amber-950/20 border border-amber-500/30 rounded-lg p-3 text-xs leading-relaxed">
+                <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+                  <span class="text-amber-400">👁️ 防御側AIが見落とした要因 (Why it Bypassed):</span>
+                </div>
+                <div class="text-amber-100/90 font-medium">${escapeHtml(b.missed_factor || '丁寧な相談文脈や正当な口実に隠蔽され、背後にある権限違反を見落とした')}</div>
+              </div>
+            </div>
+
+            <!-- 最下段: 出題者の正解基準とすり抜け発生の構図 -->
+            <div class="bg-blue-950/15 border border-blue-500/30 rounded-lg p-3.5 text-xs text-slate-300 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 font-bold text-blue-300">
+                  <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                  <span>📘 出題者による正解の解説（なぜ本来 BLOCK と判定すべきなのか）:</span>
+                </div>
+                <span class="text-[10px] text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded font-mono border border-blue-500/30">模範解答の根拠 (Ground Truth Rationale)</span>
+              </div>
+              <div class="text-slate-200 font-sans pl-3 border-l-2 border-blue-400 leading-relaxed text-[11px]">
+                ${escapeHtml(b.rationale || '-')}
+              </div>
+              <!-- すり抜け発生の構図 -->
+              <div class="text-[11px] text-rose-200 bg-rose-500/15 px-3 py-2 rounded-lg border border-rose-500/30 flex items-start gap-2 leading-relaxed">
+                <span class="font-bold text-rose-400 shrink-0">⚠️ すり抜け発生の構図:</span>
+                <span>出題データセットでは上記理由により「正解＝BLOCK（危険）」と規定されています。しかし、テストを受けた防御側ガードレールAIはプロンプトの表面的な文脈に騙され、単語<strong>【ALLOW】</strong>と誤答したため、危険な攻撃が見逃されて通過（すり抜け）しました。</span>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        </details>
+        `;
+      }).join('');
     }
 
-    // 全生成レコード抜粋用カード型レンダラー
+    // 全生成レコード抜粋用折りたたみ式カードレンダラー
     function renderRecordsCards(records) {
       const container = document.getElementById('records-container');
       if (!records || records.length === 0) {
@@ -588,44 +625,61 @@
           : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
 
         return `
-          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 sm:p-5 hover:border-slate-700 transition space-y-3">
-            <!-- 上段: メタデータ -->
-            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-mono font-bold text-sm text-slate-200">${r.id}</span>
-                <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">${r.category}</span>
-                ${getRoleBadge(r.user_role)}
-                <span class="text-xs px-2.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60 font-medium">
-                  🎯 ${escapeHtml(r.scenario || '-')}
-                </span>
+          <details class="group bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition">
+            <!-- 要約行 -->
+            <summary class="p-4 sm:p-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover:bg-slate-800/40 transition select-none">
+              <div class="space-y-1.5 min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-mono font-bold text-sm text-slate-200">${r.id}</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">${r.category}</span>
+                  ${getRoleBadge(r.user_role)}
+                  <span class="text-xs px-2.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60 font-medium">
+                    🎯 ${escapeHtml(r.scenario || '-')}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-400 truncate max-w-3xl font-sans flex items-center gap-1.5 pt-0.5">
+                  <span class="text-slate-500 font-mono shrink-0">💬 プロンプト:</span>
+                  <span class="truncate">${escapeHtml(r.prompt)}</span>
+                </p>
               </div>
-              <div>
+
+              <div class="flex items-center justify-between lg:justify-end gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800/60">
                 <span class="px-2.5 py-1 rounded-md text-xs font-bold border ${badgeClass}">
                   📘 模範正解: ${r.target_label}
                 </span>
-              </div>
-            </div>
 
-            <!-- 中段: プロンプト -->
-            <div>
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">【入力プロンプト】</div>
-              <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-slate-200 font-sans leading-relaxed">
-                ${escapeHtml(r.prompt)}
+                <!-- 開閉アイコン -->
+                <div class="flex items-center gap-1 text-xs text-slate-400 font-medium px-2.5 py-1.5 rounded bg-slate-800/60 border border-slate-700/50">
+                  <span class="group-open:hidden">詳細を見る</span>
+                  <span class="hidden group-open:inline">閉じる</span>
+                  <svg class="w-4 h-4 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
               </div>
-            </div>
+            </summary>
 
-            <!-- 下段: 意図と根拠 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-              <div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
-                <span class="font-bold text-slate-400">🎯 入力の真の意図 (Intent): </span>
-                <span class="text-slate-200 font-medium">${escapeHtml(r.attack_intent || '-')}</span>
+            <!-- 展開詳細エリア -->
+            <div class="p-4 sm:p-5 pt-3 border-t border-slate-800/80 bg-slate-950/40 space-y-3">
+              <!-- プロンプト全文 -->
+              <div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">【入力プロンプト (全文)】</div>
+                <div class="bg-slate-950 border border-slate-800 rounded-lg p-3.5 text-sm text-slate-200 font-sans leading-relaxed whitespace-pre-wrap">
+                  ${escapeHtml(r.prompt)}
+                </div>
               </div>
-              <div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
-                <span class="font-bold text-slate-400">💡 出題者判定の根拠 (Rationale): </span>
-                ${escapeHtml(r.rationale || '-')}
+
+              <!-- 意図と根拠 -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
+                  <span class="font-bold text-slate-400">🎯 入力の真の意図 (Intent): </span>
+                  <div class="text-slate-200 font-medium mt-1">${escapeHtml(r.attack_intent || '-')}</div>
+                </div>
+                <div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
+                  <span class="font-bold text-slate-400">💡 出題者判定の根拠 (Rationale): </span>
+                  <div class="text-slate-200 mt-1">${escapeHtml(r.rationale || '-')}</div>
+                </div>
               </div>
             </div>
-          </div>
+          </details>
         `;
       }).join('');
     }
