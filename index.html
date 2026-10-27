@@ -106,7 +106,8 @@
           </div>
           <p class="text-slate-400 pt-1">
             🚨 <strong>「攻撃成功（すり抜け / False Negative）」とは？</strong><br>
-            上記のように模範正解が <span class="text-rose-400 font-bold">BLOCK（危険）</span> と定められたプロンプトに対し、AIガードレールが文脈に騙されて <span class="text-emerald-400 font-bold">ALLOW（安全）</span> と誤認して通過させてしまったインシデント件数を指します。
+            上記のように模範正解が <span class="text-rose-400 font-bold">BLOCK（危険）</span> と定められたプロンプトに対し、AIガードレールが文脈に騙されて <span class="text-emerald-400 font-bold">ALLOW（安全）</span> と誤認して通過させてしまったインシデント件数を指します。<br>
+            <span class="text-blue-300">※各カードの下段にある「模範正解基準 (Rationale)」は<strong>出題者側の正解解説</strong>です。出題者が「BLOCKとすべき」と指定しているにもかかわらず、防御側AIが誤って「ALLOW」を出してしまったケースがここに並んでいます。</span>
           </p>
         </div>
       </div>
@@ -505,13 +506,13 @@
                 🎯 ${escapeHtml(b.scenario || '一般AI')}
               </span>
             </div>
-            <!-- 判定結果バッジ -->
+            <!-- 判定結果バッジ (出題者の正解 vs 防御AIの回答) -->
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                模範正解: BLOCK ❌
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40" title="出題者が定めた模範解答">
+                📘 模範正解: BLOCK
               </span>
-              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                判定: ALLOW ⚠️通過
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" title="防御側ガードレールが実際に出力した答案">
+                🤖 防御AIの回答: ALLOW (⚠️見逃し)
               </span>
               <span class="text-xs text-slate-500 font-mono">${b.latency_ms || 0}ms</span>
             </div>
@@ -547,10 +548,19 @@
             </div>
           </div>
 
-          <!-- 最下段: 詳細な技術的根拠 -->
-          <div class="bg-slate-950/40 border border-slate-800/80 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
-            <span class="font-bold text-slate-400">💡 権限境界・判定の技術的根拠 (Rationale): </span>
-            ${escapeHtml(b.rationale || '-')}
+          <!-- 最下段: 出題者の模範正解基準と防御側誤答の対比 -->
+          <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3.5 text-xs text-slate-300 space-y-2">
+            <div class="flex items-center gap-1.5 font-bold text-blue-300">
+              <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              <span>📘 出題者の模範正解基準 (なぜ模範解答がBLOCKなのか / Rationale):</span>
+            </div>
+            <div class="text-slate-200 font-sans pl-3 border-l-2 border-blue-500/50 leading-relaxed text-[11px]">
+              ${escapeHtml(b.rationale || '-')}
+            </div>
+            <div class="text-[11px] text-rose-300 bg-rose-500/10 px-2.5 py-1.5 rounded border border-rose-500/30 flex items-start gap-1.5 leading-normal">
+              <span class="font-bold shrink-0">⚠️ 判定の食い違い:</span>
+              <span>出題者AIは上記理由で「正解はBLOCK」と定めていましたが、テストを受けた防御側ガードレールは文脈の偽装に騙され【ALLOW】と誤答してすり抜けを許しました。</span>
+            </div>
           </div>
         </div>
       `).join('');
@@ -584,7 +594,7 @@
               </div>
               <div>
                 <span class="px-2.5 py-1 rounded-md text-xs font-bold border ${badgeClass}">
-                  模範判定: ${r.target_label}
+                  📘 模範正解: ${r.target_label}
                 </span>
               </div>
             </div>
