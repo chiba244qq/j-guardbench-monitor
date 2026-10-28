@@ -136,6 +136,40 @@
         </div>
       </div>
 
+      <!-- リアルタイム計算進捗プログレスバー (動的) -->
+      <div class="mt-4 p-4 bg-slate-950/80 border border-indigo-900/50 rounded-xl space-y-2.5">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2 font-bold text-indigo-300">
+            <span class="inline-block animate-spin text-emerald-400">⚙️</span>
+            <span>分子動力学シミュレーション進捗 (GROMACS 0xa8):</span>
+            <span class="text-[11px] font-normal text-slate-400 font-mono">Project 12477 (CANCER)</span>
+          </div>
+          <div class="flex items-center gap-2 font-mono">
+            <span class="text-xs text-slate-400">ステップ進捗:</span>
+            <span id="fah-steps" class="text-sm font-bold text-white">1,050,000</span>
+            <span class="text-xs text-slate-500">/ 2,500,000 steps</span>
+            <span id="fah-progress-percent" class="ml-2 text-base font-extrabold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2.5 py-0.5 rounded-lg">42%</span>
+          </div>
+        </div>
+
+        <!-- バー本体 -->
+        <div class="w-full bg-slate-900/90 rounded-full h-4 border border-indigo-900/60 overflow-hidden relative p-0.5">
+          <div id="fah-progress-bar" class="bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-500 h-full rounded-full transition-all duration-700 relative flex items-center justify-end pr-2 shadow-[0_0_12px_rgba(16,185,129,0.4)]" style="width: 42%;">
+            <span class="animate-pulse w-2 h-2 rounded-full bg-white shadow"></span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 font-mono pt-0.5">
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-400 font-bold">⚡ CPU負荷:</span>
+            <span id="fah-cpu-load" class="text-slate-200">15.9 / 16 cores (99.5% 並列演算中)</span>
+          </div>
+          <div class="text-slate-400 truncate max-w-md">
+            最新ログ: <span id="fah-latest-log" class="text-indigo-300">WU00: Completed 1,050,000 out of 2,500,000 steps (42%)</span>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
         <div class="bg-slate-950/60 border border-indigo-900/40 rounded-lg p-3.5">
           <div class="text-[11px] text-slate-400 font-medium">🎯 解析対象プロジェクト</div>
@@ -519,6 +553,23 @@
       if (timer && c.max_run_duration) timer.textContent = c.max_run_duration;
       const stopTarget = document.getElementById('fah-stop-target');
       if (stopTarget && c.auto_stop_target) stopTarget.textContent = c.auto_stop_target;
+
+      // リアルタイム動的進捗の反映
+      const pct = c.progress_percent !== undefined ? c.progress_percent : 42;
+      const pctEl = document.getElementById('fah-progress-percent');
+      if (pctEl) pctEl.textContent = `${pct}%`;
+
+      const barEl = document.getElementById('fah-progress-bar');
+      if (barEl) barEl.style.width = `${Math.min(100, Math.max(3, pct))}%`;
+
+      const stepsEl = document.getElementById('fah-steps');
+      if (stepsEl && c.current_steps) stepsEl.textContent = Number(c.current_steps).toLocaleString();
+
+      const cpuEl = document.getElementById('fah-cpu-load');
+      if (cpuEl && c.cpu_load) cpuEl.textContent = c.cpu_load;
+
+      const logEl = document.getElementById('fah-latest-log');
+      if (logEl && c.latest_log) logEl.textContent = c.latest_log;
     }
 
     function renderABTest(ab) {
