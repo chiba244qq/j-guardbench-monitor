@@ -807,7 +807,156 @@
           </div>
         </div>
 
+        
+        <!-- 各レイヤ別 防御パフォーマンス・混同行列 (TP / TN / FP / FN) -->
+        <div class="mt-4 bg-slate-950/80 border border-indigo-900/50 rounded-xl overflow-hidden shadow-lg">
+          <div class="p-3 bg-gradient-to-r from-indigo-950/60 to-purple-950/40 border-b border-indigo-900/40 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                <span>🛡️</span>
+                <span>各レイヤ別 防御パフォーマンス・混同行列 (TP / TN / FP / FN)</span>
+              </span>
+              <span class="text-[10px] bg-indigo-900/40 text-indigo-200 border border-indigo-700/40 px-2 py-0.5 rounded font-mono">
+                多層防御トレース
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-400">
+              評価対象: <strong class="text-white font-mono">${ab.sample_count || 0}</strong> サンプル (攻撃24件 / 良性6件)
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono border-collapse">
+              <thead>
+                <tr class="bg-slate-900/80 text-slate-400 text-[11px] border-b border-slate-800">
+                  <th class="py-2.5 px-3 font-semibold">防御レイヤ (Layer)</th>
+                  <th class="py-2.5 px-2 font-semibold">処理方式</th>
+                  <th class="py-2.5 px-2 text-right font-semibold">判定件数</th>
+                  <th class="py-2.5 px-2 text-right font-semibold text-emerald-400" title="攻撃を正しく遮断">TP (攻撃遮断)</th>
+                  <th class="py-2.5 px-2 text-right font-semibold text-blue-400" title="正当な業務を安全通過">TN (正当通過)</th>
+                  <th class="py-2.5 px-2 text-right font-semibold text-amber-400" title="正当な業務を誤遮断">FP (誤遮断)</th>
+                  <th class="py-2.5 px-2 text-right font-semibold text-rose-400" title="攻撃を見逃し">FN (すり抜け)</th>
+                  <th class="py-2.5 px-3 text-right font-semibold text-indigo-300">阻止成功率</th>
+                  <th class="py-2.5 px-3 text-right font-semibold">平均応答</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60 text-[11px]">
+                ${(() => {
+                  const layerStats = {
+                    "L1": { name: "Layer 1: プレプロセス & 難読化解除", desc: "Base64/不可視文字/コメント正規化", type: "決定論的", typeBadge: "bg-slate-900 text-slate-400 border-slate-800", count: 0, TP: 0, TN: 0, FP: 0, FN: 0, latencies: [] },
+                    "L2": { name: "Layer 2: 決定論的シグネチャスキャナ", desc: "プロンプト抽出/指示上書き/特殊構文", type: "⚡ 決定論的 (< 1ms)", typeBadge: "bg-amber-950/40 text-amber-300 border-amber-800/40", count: 0, TP: 0, TN: 0, FP: 0, FN: 0, latencies: [] },
+                    "L3": { name: "Layer 3: 決定論的 RBAC 認可ゲート", desc: "ロール境界/越境アクセス/権限外指示", type: "⚡ 決定論的 (< 1ms)", typeBadge: "bg-blue-950/40 text-blue-300 border-blue-800/40", count: 0, TP: 0, TN: 0, FP: 0, FN: 0, latencies: [] },
+                    "L4": { name: "Layer 4: LLM CoT推論エンジン", desc: "3ステップ文脈推論・偽装検知", type: "🧠 LLM推論 (約10s)", typeBadge: "bg-purple-950/40 text-purple-300 border-purple-800/40", count: 0, TP: 0, TN: 0, FP: 0, FN: 0, latencies: [] }
+                  };
+
+                  samples.forEach(s => {
+                    const tgt = s.target;
+                    const v3Item = s.v3 || {};
+                    const pred = v3Item.pred;
+                    const lName = v3Item.layer || "";
+                    const lat = v3Item.latency_ms || 0;
+
+                    let key = "L4";
+                    if (lName.includes("Layer 2") || lName.includes("Signature")) key = "L2";
+                    else if (lName.includes("Layer 3") || lName.includes("RBAC")) key = "L3";
+                    else if (lName.includes("Layer 1") || lName.includes("Sanitize")) key = "L1";
+
+                    const st = layerStats[key];
+                    st.count++;
+                    st.latencies.push(lat);
+
+                    if (tgt === "BLOCK" && pred === "BLOCK") st.TP++;
+                    else if (tgt === "ALLOW" && pred === "ALLOW") st.TN++;
+                    else if (tgt === "ALLOW" && pred === "BLOCK") st.FP++;
+                    else if (tgt === "BLOCK" && pred === "ALLOW") st.FN++;
+                  });
+
+                  let rowsHtml = "";
+                  let totCount = 0, totTP = 0, totTN = 0, totFP = 0, totFN = 0;
+                  const allLats = [];
+
+                  ["L1", "L2", "L3", "L4"].forEach(k => {
+                    const st = layerStats[k];
+                    totCount += st.count;
+                    totTP += st.TP;
+                    totTN += st.TN;
+                    totFP += st.FP;
+                    totFN += st.FN;
+                    st.latencies.forEach(l => allLats.push(l));
+
+                    const share = ab.sample_count ? Math.round(st.count / ab.sample_count * 100) : 0;
+                    const avgLat = st.latencies.length ? (st.latencies.reduce((a,b)=>a+b,0) / st.latencies.length).toFixed(1) : "-";
+                    const atkTotal = st.TP + st.FN;
+                    const blockRate = atkTotal > 0 ? (st.TP / atkTotal * 100).toFixed(1) + "%" : (st.TP > 0 ? "100%" : "-");
+
+                    rowsHtml += `
+                      <tr class="hover:bg-slate-900/40 transition">
+                        <td class="py-2.5 px-3">
+                          <div class="font-sans font-bold text-slate-200">${st.name}</div>
+                          <div class="text-[10px] text-slate-500 font-sans">${st.desc}</div>
+                        </td>
+                        <td class="py-2.5 px-2">
+                          <span class="inline-block px-1.5 py-0.5 rounded text-[10px] border ${st.typeBadge}">${st.type}</span>
+                        </td>
+                        <td class="py-2.5 px-2 text-right">
+                          <span class="font-bold text-white">${st.count}</span>
+                          <span class="text-[10px] text-slate-500">(${share}%)</span>
+                        </td>
+                        <td class="py-2.5 px-2 text-right font-bold ${st.TP > 0 ? "text-emerald-400" : "text-slate-600"}">${st.TP}</td>
+                        <td class="py-2.5 px-2 text-right font-bold ${st.TN > 0 ? "text-blue-400" : "text-slate-600"}">${st.TN}</td>
+                        <td class="py-2.5 px-2 text-right font-bold ${st.FP > 0 ? "text-amber-400" : "text-slate-600"}">${st.FP}</td>
+                        <td class="py-2.5 px-2 text-right font-bold ${st.FN > 0 ? "text-rose-400" : "text-slate-600"}">${st.FN}</td>
+                        <td class="py-2.5 px-3 text-right">
+                          <span class="font-bold ${st.TP > 0 ? "text-indigo-300" : "text-slate-500"}">${blockRate}</span>
+                        </td>
+                        <td class="py-2.5 px-3 text-right font-mono">
+                          ${avgLat !== "-" ? (Number(avgLat) <= 2 ? `<span class="text-emerald-400 font-bold">⚡ ${avgLat}ms</span>` : `<span class="text-slate-300">${Math.round(avgLat)}ms</span>`) : "-"}
+                        </td>
+                      </tr>
+                    `;
+                  });
+
+                  // 合計行
+                  const totAvgLat = allLats.length ? Math.round(allLats.reduce((a,b)=>a+b,0) / allLats.length) : 0;
+                  const totAtk = totTP + totFN;
+                  const totBlockRate = totAtk > 0 ? (totTP / totAtk * 100).toFixed(1) + "%" : "0%";
+
+                  rowsHtml += `
+                    <tr class="bg-indigo-950/30 border-t-2 border-indigo-900/60 font-bold">
+                      <td class="py-2.5 px-3 text-indigo-300 font-sans" colspan="2">
+                        総合パイプライン (Multi-Layer Pipeline Total)
+                      </td>
+                      <td class="py-2.5 px-2 text-right text-white">${totCount}</td>
+                      <td class="py-2.5 px-2 text-right text-emerald-400">${totTP}</td>
+                      <td class="py-2.5 px-2 text-right text-blue-400">${totTN}</td>
+                      <td class="py-2.5 px-2 text-right ${totFP > 0 ? "text-amber-400" : "text-slate-400"}">${totFP}</td>
+                      <td class="py-2.5 px-2 text-right text-rose-400">${totFN}</td>
+                      <td class="py-2.5 px-3 text-right text-indigo-300">${totBlockRate}</td>
+                      <td class="py-2.5 px-3 text-right text-amber-300 font-mono">${totAvgLat}ms</td>
+                    </tr>
+                  `;
+
+                  return rowsHtml;
+                })()}
+              </tbody>
+            </table>
+          </div>
+          <div class="p-2.5 bg-slate-900/40 border-t border-slate-800/80 text-[10px] text-slate-400 flex flex-wrap items-center justify-between gap-2 font-sans">
+            <div>
+              <span class="font-bold text-slate-300">※指標説明:</span>
+              <strong class="text-emerald-400 font-mono">TP</strong>: 攻撃を阻止成功 /
+              <strong class="text-blue-400 font-mono">TN</strong>: 正当業務を安全通過 /
+              <strong class="text-amber-400 font-mono">FP</strong>: 正当業務を誤遮断 (過剰防御) /
+              <strong class="text-rose-400 font-mono">FN</strong>: 攻撃見逃し (すり抜け)
+            </div>
+            <div class="text-slate-500">
+              Layer 2・Layer 3 で 30% の攻撃を 1ms で高速遮断し、グレーゾーンを Layer 4 で精密判定
+            </div>
+          </div>
+        </div>
+
         <!-- 遮断レイヤー内訳バッジ -->
+
         <div class="flex flex-wrap items-center justify-between gap-3 bg-indigo-950/30 border border-indigo-900/40 rounded-lg p-3 mt-3 text-xs">
           <div class="flex flex-wrap items-center gap-3">
             <span class="text-slate-400 font-medium">🛡️ 遮断レイヤー内訳:</span>
