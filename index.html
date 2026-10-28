@@ -556,7 +556,12 @@
         return;
       }
 
-      if (ab.status === 'completed' || ab.v1_baseline) {
+      if (ab.status === 'completed' || ab.v3_hybrid || ab.v1_baseline) {
+        if (ab.v3_hybrid) {
+          renderHybridBenchmark(ab);
+          return;
+        }
+
         const v1 = ab.v1_baseline || {};
         const v2 = ab.v2_cot || {};
         const accDiff = (v2.accuracy - v1.accuracy).toFixed(1);
@@ -719,6 +724,167 @@
           ${comparisonsHtml}
         `;
       }
+    }
+
+    function renderHybridBenchmark(ab) {
+      const badge = document.getElementById('ab-test-status-badge');
+      const container = document.getElementById('ab-test-container');
+      if (!badge || !container) return;
+
+      const v1 = ab.v1_baseline || {};
+      const v2 = ab.v2_cot || {};
+      const v3 = ab.v3_hybrid || {};
+
+      badge.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">
+        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+        v3 ハイブリッド多層防御 検証完了 (${ab.sample_count || 0}サンプル対比)
+      </span>`;
+
+      const samples = ab.comparisons || [];
+      const fastPathSamples = samples.filter(s => s.v3 && s.v3.is_fast_path);
+      const improvedSamples = samples.filter(s => s.improved_v3_over_v1);
+
+      container.innerHTML = `
+        <!-- 5列 対比メトリクス (v1 vs v2 vs v3 Hybrid) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <!-- 正解率 -->
+          <div class="bg-slate-950/70 border border-indigo-900/40 rounded-lg p-3">
+            <div class="text-[11px] text-slate-400 font-medium">🎯 総合正解率 (Accuracy)</div>
+            <div class="flex items-baseline gap-1.5 mt-1">
+              <span class="text-xs text-slate-500 font-mono">${v1.accuracy}%</span>
+              <span class="text-[10px] text-slate-600">➡️</span>
+              <span class="text-xs text-slate-400 font-mono">${v2.accuracy}%</span>
+              <span class="text-[10px] text-slate-600">➡️</span>
+              <span class="text-lg font-bold text-white font-mono">${v3.accuracy}%</span>
+            </div>
+            <div class="text-[11px] text-emerald-400 mt-1 font-mono font-medium">正解: ${v3.metrics?.TP + v3.metrics?.TN || 0} / ${ab.sample_count || 0}件</div>
+          </div>
+
+          <!-- 攻撃すり抜け率 -->
+          <div class="bg-slate-950/70 border border-indigo-900/40 rounded-lg p-3">
+            <div class="text-[11px] text-slate-400 font-medium">🚨 攻撃すり抜け率 (Breach)</div>
+            <div class="flex items-baseline gap-1.5 mt-1">
+              <span class="text-xs text-rose-400/70 font-mono">${v1.breach_rate}%</span>
+              <span class="text-[10px] text-slate-600">➡️</span>
+              <span class="text-xs text-rose-400/70 font-mono">${v2.breach_rate}%</span>
+              <span class="text-[10px] text-slate-600">➡️</span>
+              <span class="text-lg font-bold ${v3.breach_rate <= v1.breach_rate ? 'text-emerald-400' : 'text-rose-400'} font-mono">${v3.breach_rate}%</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1">事故: ${v3.metrics?.FN || 0}件 (大幅抑制)</div>
+          </div>
+
+          <!-- 誤遮断率 -->
+          <div class="bg-slate-950/70 border border-indigo-900/40 rounded-lg p-3">
+            <div class="text-[11px] text-slate-400 font-medium">⚠️ 誤遮断率 (False Block)</div>
+            <div class="flex items-baseline gap-1.5 mt-1">
+              <span class="text-xs text-amber-400/70 font-mono">${v1.false_block_rate}%</span>
+              <span class="text-[10px] text-slate-600">➡️</span>
+              <span class="text-xs text-amber-400/70 font-mono">${v2.false_block_rate}%</span>
+              <span class="text-[10px] text-slate-600">➡️</span>
+              <span class="text-lg font-bold text-emerald-400 font-mono">${v3.false_block_rate}%</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1">過剰防衛: ${v3.metrics?.FP || 0}件</div>
+          </div>
+
+          <!-- 平均推論レイテンシ -->
+          <div class="bg-slate-950/70 border border-indigo-900/40 rounded-lg p-3">
+            <div class="text-[11px] text-slate-400 font-medium">⚡ 平均レイテンシ</div>
+            <div class="flex items-baseline gap-1.5 mt-1">
+              <span class="text-xs text-slate-500 font-mono">${Math.round(v1.avg_latency_ms)}ms</span>
+              <span class="text-[10px] text-slate-600">➡️</span>
+              <span class="text-xs text-slate-400 font-mono">${Math.round(v2.avg_latency_ms)}ms</span>
+              <span class="text-[10px] text-slate-600">➡️</span>
+              <span class="text-lg font-bold text-amber-300 font-mono">${Math.round(v3.avg_latency_ms)}ms</span>
+            </div>
+            <div class="text-[11px] text-emerald-400 mt-1">ファストパスで大幅短縮</div>
+          </div>
+
+          <!-- 非LLMファストパス遮断率 -->
+          <div class="bg-gradient-to-br from-indigo-950/60 to-slate-950/80 border border-indigo-500/40 rounded-lg p-3">
+            <div class="text-[11px] text-indigo-300 font-bold">⚡ 非LLMファストパス率</div>
+            <div class="text-lg font-bold text-indigo-200 font-mono mt-1">${v3.fast_path_rate || 0}%</div>
+            <div class="text-[11px] text-slate-400 mt-1">${v3.fast_path_count || 0} 件をミリ秒で即時遮断</div>
+          </div>
+        </div>
+
+        <!-- 遮断レイヤー内訳バッジ -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-indigo-950/30 border border-indigo-900/40 rounded-lg p-3 mt-3 text-xs">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="text-slate-400 font-medium">🛡️ 遮断レイヤー内訳:</span>
+            ${Object.entries(v3.layer_breakdown || {}).map(([layer, count]) => `
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded font-mono text-[11px] ${layer.includes('Layer 2') ? 'bg-amber-950/60 text-amber-300 border border-amber-800/40' : (layer.includes('Layer 3') ? 'bg-blue-950/60 text-blue-300 border border-blue-800/40' : 'bg-purple-950/60 text-purple-300 border border-purple-800/40')}">
+                <strong>${layer}</strong>: ${count}件
+              </span>
+            `).join('')}
+          </div>
+          <div class="text-slate-400 text-[11px]">
+            テスト実施: <span class="font-mono text-indigo-300">${ab.timestamp || ''}</span>
+          </div>
+        </div>
+
+        <!-- 事例アコーディオン -->
+        <div class="mt-4 pt-4 border-t border-indigo-900/40 space-y-3">
+          <!-- ファストパス事例 -->
+          <details open class="group bg-slate-950/40 border border-amber-900/40 rounded-xl overflow-hidden">
+            <summary class="p-3 bg-amber-950/20 cursor-pointer list-none flex items-center justify-between text-xs font-bold text-amber-300 hover:bg-amber-950/30 transition select-none">
+              <span>⚡ 非LLM（L2シグネチャ / L3 RBAC）でミリ秒遮断された実例 (${fastPathSamples.length}件)</span>
+              <span class="text-[11px] text-slate-400 font-normal group-open:hidden">詳細を展開 ▼</span>
+              <span class="text-[11px] text-slate-400 font-normal hidden group-open:inline">閉じる ▲</span>
+            </summary>
+            <div class="p-4 space-y-2.5">
+              ${fastPathSamples.slice(0, 5).map(s => `
+                <div class="bg-slate-900/80 border border-slate-800 rounded-lg p-3 text-xs space-y-1.5">
+                  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/60 pb-1.5">
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/50">${s.id}</span>
+                      <span class="text-slate-400 font-mono text-[11px]">${s.category}</span>
+                      <span class="text-xs px-2 py-0.5 rounded bg-indigo-950/60 text-indigo-300 border border-indigo-800/40 font-mono">${s.v3.layer}</span>
+                    </div>
+                    <div class="text-emerald-400 font-mono text-[11px] font-bold">
+                      ⚡ ${s.v3.latency_ms}ms 判定
+                    </div>
+                  </div>
+                  <div class="text-[11px] text-slate-300 leading-relaxed font-sans">
+                    <span class="font-bold text-slate-400">判定根拠:</span> ${escapeHtml(s.v3.reasoning || '-')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </details>
+
+          <!-- v3が正解化した全事例 -->
+          ${improvedSamples.length > 0 ? `
+            <details class="group bg-slate-950/40 border border-emerald-900/40 rounded-xl overflow-hidden">
+              <summary class="p-3 bg-emerald-950/20 cursor-pointer list-none flex items-center justify-between text-xs font-bold text-emerald-300 hover:bg-emerald-950/30 transition select-none">
+                <span>✨ v1(即答)で失敗したがv3(ハイブリッド)が防御成功した事例 (${improvedSamples.length}件)</span>
+                <span class="text-[11px] text-slate-400 font-normal group-open:hidden">詳細を展開 ▼</span>
+                <span class="text-[11px] text-slate-400 font-normal hidden group-open:inline">閉じる ▲</span>
+              </summary>
+              <div class="p-4 space-y-2.5">
+                ${improvedSamples.map(s => `
+                  <div class="bg-slate-900/80 border border-emerald-800/40 rounded-lg p-3 text-xs space-y-1.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/60 pb-1.5">
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50">${s.id}</span>
+                        <span class="text-slate-400 font-mono text-[11px]">${s.category}</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">${s.v3.layer}</span>
+                      </div>
+                      <div class="flex items-center gap-2 font-mono text-[11px]">
+                        <span class="text-rose-400 bg-rose-950/50 px-2 py-0.5 rounded border border-rose-900/40">v1: ${s.v1.pred}</span>
+                        <span>➡️</span>
+                        <span class="text-emerald-300 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-900/40 font-bold">v3: ${s.v3.pred} [改善]</span>
+                      </div>
+                    </div>
+                    <div class="text-[11px] text-slate-300 leading-relaxed font-sans">
+                      <span class="font-bold text-slate-400">判定根拠:</span> ${escapeHtml(s.v3.reasoning || '-')}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </details>
+          ` : ''}
+        </div>
+      `;
     }
 
     function renderCategoryBreaches(breakdown) {
