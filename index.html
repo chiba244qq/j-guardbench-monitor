@@ -113,6 +113,53 @@
       </div>
     </div>
 
+    <!-- SECTION 0: Cancer Research Volunteer Computing Node (Folding@home) -->
+    <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/40 rounded-xl p-5 shadow-lg mb-8 relative overflow-hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-indigo-900/50 pb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="flex h-3 w-3 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              🧬 余剰計算資源を活用したがん・創薬解析ノード (Folding@home)
+            </h3>
+            <span id="fah-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">RUNNING (解析計算中)</span>
+          </div>
+          <p class="text-xs text-indigo-200/80 mt-1">10月30日に失効するGCP余剰クレジット枠を活用し、がん関連タンパク質の分子動力学シミュレーションを24時間自律実行中</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <span class="text-xs font-mono bg-indigo-950/80 text-indigo-300 px-3 py-1.5 rounded-lg border border-indigo-800/80">
+            Node: <strong id="fah-node-name" class="text-white">fah-worker-01</strong> (<span id="fah-machine-type">16 vCPU / 64GB</span>)
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+        <div class="bg-slate-950/60 border border-indigo-900/40 rounded-lg p-3.5">
+          <div class="text-[11px] text-slate-400 font-medium">🎯 解析対象プロジェクト</div>
+          <div id="fah-project" class="text-sm font-bold text-indigo-200 mt-1">Project 12477</div>
+          <div id="fah-project-desc" class="text-[11px] text-slate-400 mt-0.5">がん関連タンパク質標的の動態解析</div>
+        </div>
+        <div class="bg-slate-950/60 border border-indigo-900/40 rounded-lg p-3.5">
+          <div class="text-[11px] text-slate-400 font-medium">⚡ 計算エンジン & 割当</div>
+          <div id="fah-engine" class="text-sm font-bold text-indigo-200 mt-1">GROMACS 0xa8 (14 vCPU)</div>
+          <div class="text-[11px] text-emerald-400 mt-0.5 font-mono">14コア全力並列計算稼働中</div>
+        </div>
+        <div class="bg-slate-950/60 border border-indigo-900/40 rounded-lg p-3.5">
+          <div class="text-[11px] text-slate-400 font-medium">⏱️ クレジット保護タイマー</div>
+          <div id="fah-timer" class="text-sm font-bold text-amber-300 mt-1">144,000秒 (40時間上限)</div>
+          <div id="fah-stop-target" class="text-[11px] text-slate-400 mt-0.5">10/30 08:13 JST 完全自動停止</div>
+        </div>
+        <div class="bg-slate-950/60 border border-indigo-900/40 rounded-lg p-3.5">
+          <div class="text-[11px] text-slate-400 font-medium">🛡️ 課金安全性</div>
+          <div id="fah-safety" class="text-sm font-bold text-emerald-300 mt-1">手出し課金リスクゼロ</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">失効前自動停止・完全無償枠内</div>
+        </div>
+      </div>
+    </div>
+
     <!-- SECTION 1: Defense & Attack Breach Metrics -->
     <div class="my-6">
       <div class="flex items-center justify-between mb-4">
@@ -243,6 +290,25 @@
         <div id="role-breach-list" class="space-y-3">
           <div class="text-xs text-slate-500 text-center py-4">ロール別データを集計中...</div>
         </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2.5: Guardrail A/B Benchmark Experiment -->
+    <div class="bg-gradient-to-r from-slate-900 via-purple-950/30 to-slate-900 border border-purple-500/40 rounded-xl p-5 shadow-lg mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-purple-900/50 pb-4">
+        <div>
+          <h3 class="text-base font-bold text-purple-300 flex items-center gap-2">
+            🛡️ AIガードレール改善検証（A/Bテスト実験中）
+          </h3>
+          <p class="text-xs text-slate-400">「思考なし即答（Baseline v1）」と「3ステップ推論（CoT Guardrail v2）」の防御性能対比</p>
+        </div>
+        <div id="ab-test-status-badge">
+          <span class="text-xs px-2.5 py-1 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">A/Bテスト検証中...</span>
+        </div>
+      </div>
+
+      <div id="ab-test-container" class="pt-4">
+        <div class="text-center py-6 text-slate-500 text-xs">A/Bテストデータを読み込み中...</div>
       </div>
     </div>
 
@@ -430,6 +496,182 @@
 
       renderCharts(data.categories || {}, data.severities || {});
       renderRecordsCards(data.latest_records || []);
+
+      renderCancerResearch(data.cancer_research);
+      renderABTest(data.guardrail_ab_test);
+    }
+
+    function renderCancerResearch(c) {
+      if (!c) return;
+      const badge = document.getElementById('fah-status-badge');
+      if (badge && c.status) {
+        badge.textContent = `${c.status} (解析計算中)`;
+      }
+      const nodeName = document.getElementById('fah-node-name');
+      if (nodeName && c.instance_name) nodeName.textContent = c.instance_name;
+      const machType = document.getElementById('fah-machine-type');
+      if (machType && c.machine_type) machType.textContent = c.machine_type.split(' ')[0] + ' / 16 vCPU';
+      const project = document.getElementById('fah-project');
+      if (project && c.target_project) project.textContent = c.target_project.split(' ')[0];
+      const engine = document.getElementById('fah-engine');
+      if (engine && c.simulation_core) engine.textContent = `${c.simulation_core.split(' ')[0]} (${c.allocated_cpus || 14} vCPU)`;
+      const timer = document.getElementById('fah-timer');
+      if (timer && c.max_run_duration) timer.textContent = c.max_run_duration;
+      const stopTarget = document.getElementById('fah-stop-target');
+      if (stopTarget && c.auto_stop_target) stopTarget.textContent = c.auto_stop_target;
+    }
+
+    function renderABTest(ab) {
+      const badge = document.getElementById('ab-test-status-badge');
+      const container = document.getElementById('ab-test-container');
+      if (!badge || !container) return;
+
+      if (!ab) {
+        badge.innerHTML = '<span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700">準備中</span>';
+        container.innerHTML = '<div class="text-center py-6 text-slate-500 text-xs">A/Bテストデータ待機中...</div>';
+        return;
+      }
+
+      if (ab.status === 'running') {
+        badge.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium animate-pulse">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          ${escapeHtml(ab.progress || '評価進行中...')}
+        </span>`;
+        container.innerHTML = `
+          <div class="space-y-4 py-2">
+            <div class="bg-slate-950/60 border border-purple-900/30 rounded-lg p-4">
+              <div class="flex items-center justify-between text-xs text-purple-300 font-mono mb-2">
+                <span>🔄 進行状況</span>
+                <span class="font-bold text-amber-400">${escapeHtml(ab.progress || '')}</span>
+              </div>
+              <div class="text-xs text-slate-400 mb-3 leading-relaxed">
+                同一のプロンプトテストセット（各カテゴリから均等抽出）に対し、<strong>Baseline v1（思考なし即答）</strong>と<strong>CoT Guardrail v2（3ステップ推論プロセス）</strong>を完全同一条件下で並行評価しています。
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded p-3 text-[11px] font-mono text-slate-300 overflow-x-auto">
+                <span class="text-slate-500">最新実行ログ:</span> ${escapeHtml(ab.latest_log || '推論実行中...')}
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (ab.status === 'completed' || ab.v1_baseline) {
+        const v1 = ab.v1_baseline || {};
+        const v2 = ab.v2_cot || {};
+        const accDiff = (v2.accuracy - v1.accuracy).toFixed(1);
+        const breachDiff = (v2.breach_rate - v1.breach_rate).toFixed(1);
+        const fpDiff = (v2.false_block_rate - v1.false_block_rate).toFixed(1);
+
+        badge.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          検証完了 (${ab.sample_count || 0}サンプル対比)
+        </span>`;
+
+        let comparisonsHtml = '';
+        const samples = ab.sample_comparisons || [];
+        const improvedSamples = samples.filter(s => s.improved);
+        const regressedSamples = samples.filter(s => s.regressed);
+
+        if (improvedSamples.length > 0) {
+          comparisonsHtml = `
+            <div class="mt-4 pt-4 border-t border-purple-900/40">
+              <div class="text-xs font-bold text-emerald-300 mb-3 flex items-center gap-1.5">
+                <span>✨ v1の誤答をv2（CoT推論）が正解化した具体例 (${improvedSamples.length}件)</span>
+              </div>
+              <div class="space-y-3">
+                ${improvedSamples.map(s => `
+                  <div class="bg-slate-950/70 border border-emerald-800/40 rounded-lg p-3.5 text-xs space-y-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50">${s.id}</span>
+                        <span class="text-slate-400 font-mono text-[11px]">${s.category}</span>
+                        <span class="text-slate-400 text-[11px]">模範正解: <strong class="text-white">${s.target}</strong></span>
+                      </div>
+                      <div class="flex items-center gap-2 font-mono text-[11px]">
+                        <span class="text-rose-400 bg-rose-950/50 px-2 py-0.5 rounded border border-rose-900/40">v1判定: ${s.v1.pred} (${s.v1.status})</span>
+                        <span>➡️</span>
+                        <span class="text-emerald-300 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-900/40 font-bold">v2判定: ${s.v2.pred} (${s.v2.status}) [改善]</span>
+                      </div>
+                    </div>
+                    ${s.v2.reasoning ? `
+                      <div class="bg-purple-950/20 border border-purple-900/30 rounded p-2.5 text-[11px] text-purple-200">
+                        <span class="font-bold text-purple-300 font-sans">🧠 v2の推論プロセス (CoT):</span>
+                        <div class="mt-1 font-mono text-slate-300 leading-relaxed">${escapeHtml(s.v2.reasoning)}</div>
+                      </div>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        container.innerHTML = `
+          <!-- 4列 対比メトリクス -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- 正解率 -->
+            <div class="bg-slate-950/70 border border-purple-900/40 rounded-lg p-3.5">
+              <div class="text-[11px] text-slate-400 font-medium">🎯 総合正解率 (Accuracy)</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-xs text-slate-400 font-mono">${v1.accuracy}%</span>
+                <span class="text-slate-500">➡️</span>
+                <span class="text-lg font-bold text-white font-mono">${v2.accuracy}%</span>
+                <span class="text-xs font-bold font-mono ${accDiff >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${accDiff >= 0 ? '+' : ''}${accDiff} pt)</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">正解件数: ${v1.metrics?.TP + v1.metrics?.TN || 0} ➡️ ${v2.metrics?.TP + v2.metrics?.TN || 0}</div>
+            </div>
+
+            <!-- 攻撃すり抜け率 -->
+            <div class="bg-slate-950/70 border border-purple-900/40 rounded-lg p-3.5">
+              <div class="text-[11px] text-slate-400 font-medium">🚨 攻撃すり抜け率 (Breach / 事故)</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-xs text-rose-400 font-mono">${v1.breach_rate}%</span>
+                <span class="text-slate-500">➡️</span>
+                <span class="text-lg font-bold ${v2.breach_rate <= v1.breach_rate ? 'text-emerald-400' : 'text-rose-400'} font-mono">${v2.breach_rate}%</span>
+                <span class="text-xs font-bold font-mono ${breachDiff <= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${breachDiff <= 0 ? '' : '+'}${breachDiff} pt)</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">FN事故: ${v1.metrics?.FN || 0}件 ➡️ ${v2.metrics?.FN || 0}件</div>
+            </div>
+
+            <!-- 誤遮断率 -->
+            <div class="bg-slate-950/70 border border-purple-900/40 rounded-lg p-3.5">
+              <div class="text-[11px] text-slate-400 font-medium">⚠️ 誤遮断率 (False Block / 過剰防衛)</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-xs text-amber-400 font-mono">${v1.false_block_rate}%</span>
+                <span class="text-slate-500">➡️</span>
+                <span class="text-lg font-bold ${v2.false_block_rate <= v1.false_block_rate ? 'text-emerald-400' : 'text-amber-400'} font-mono">${v2.false_block_rate}%</span>
+                <span class="text-xs font-bold font-mono ${fpDiff <= 0 ? 'text-emerald-400' : 'text-amber-400'}">(${fpDiff <= 0 ? '' : '+'}${fpDiff} pt)</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">FP誤遮断: ${v1.metrics?.FP || 0}件 ➡️ ${v2.metrics?.FP || 0}件</div>
+            </div>
+
+            <!-- 平均推論レイテンシ -->
+            <div class="bg-slate-950/70 border border-purple-900/40 rounded-lg p-3.5">
+              <div class="text-[11px] text-slate-400 font-medium">⚡ 平均レイテンシ (レスポンス時間)</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-xs text-slate-400 font-mono">${Math.round(v1.avg_latency_ms)}ms</span>
+                <span class="text-slate-500">➡️</span>
+                <span class="text-lg font-bold text-purple-300 font-mono">${Math.round(v2.avg_latency_ms)}ms</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">推論ステップ付加に伴うオーバーヘッド</div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-purple-950/30 border border-purple-900/30 rounded-lg p-3 mt-3 text-xs">
+            <div class="flex items-center gap-4 text-slate-300">
+              <span>✨ 誤判定改善: <strong class="text-emerald-400 font-mono">${ab.improvements_count || 0}</strong> 件</span>
+              <span>⚠️ 判定悪化: <strong class="text-rose-400 font-mono">${ab.regressions_count || 0}</strong> 件</span>
+              <span>⚖️ 判定一致: <strong class="text-slate-300 font-mono">${(ab.sample_count || 0) - (ab.improvements_count || 0) - (ab.regressions_count || 0)}</strong> 件</span>
+            </div>
+            <div class="text-slate-400 text-[11px]">
+              テスト実施: <span class="font-mono text-purple-300">${ab.timestamp || ''}</span>
+            </div>
+          </div>
+
+          ${comparisonsHtml}
+        `;
+      }
     }
 
     function renderCategoryBreaches(breakdown) {
