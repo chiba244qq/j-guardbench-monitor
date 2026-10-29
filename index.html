@@ -532,7 +532,7 @@
       renderRecordsCards(data.latest_records || []);
 
       renderCancerResearch(data.cancer_research);
-      renderABTest(data.guardrail_ab_test);
+      renderABTest(data.guardrail_ab_test, data);
     }
 
     function renderCancerResearch(c) {
@@ -572,7 +572,7 @@
       if (logEl && c.latest_log) logEl.textContent = c.latest_log;
     }
 
-    function renderABTest(ab) {
+    function renderABTest(ab, data = {}) {
       const badge = document.getElementById('ab-test-status-badge');
       const container = document.getElementById('ab-test-container');
       if (!badge || !container) return;
@@ -1070,7 +1070,7 @@
               </span>
             </div>
             <div class="text-[11px] text-slate-400">
-              全 <strong class="text-white font-mono">${(data.distillation_cycles || []).length}</strong> 世代推移記録 (実評価データ <strong class="text-white font-mono">${data.evaluation ? data.evaluation.total_evaluated : 0}</strong> 件ベース)
+              全 <strong class="text-white font-mono">${((data && data.distillation_cycles) || (ab && ab.distillation_cycles) || []).length}</strong> 世代推移記録 (実評価データ <strong class="text-white font-mono">${(data && data.evaluation) ? data.evaluation.total_evaluated : 0}</strong> 件ベース)
             </div>
           </div>
 
@@ -1126,10 +1126,10 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-800/60 text-[11px]">
-                ${(data.distillation_cycles || []).map((c, idx) => `
-                  <tr class="hover:bg-slate-900/40 transition ${idx === (data.distillation_cycles || []).length - 1 ? 'bg-emerald-950/20' : ''}">
+                ${((data && data.distillation_cycles) || (ab && ab.distillation_cycles) || []).map((c, idx) => `
+                  <tr class="hover:bg-slate-900/40 transition ${idx === ((data && data.distillation_cycles) || (ab && ab.distillation_cycles) || []).length - 1 ? 'bg-emerald-950/20' : ''}">
                     <td class="py-2.5 px-3">
-                      <div class="font-sans font-bold ${idx === (data.distillation_cycles || []).length - 1 ? 'text-emerald-300' : 'text-slate-200'}">${c.name}</div>
+                      <div class="font-sans font-bold ${idx === ((data && data.distillation_cycles) || (ab && ab.distillation_cycles) || []).length - 1 ? 'text-emerald-300' : 'text-slate-200'}">${c.name}</div>
                       <div class="text-[10px] text-slate-500 font-sans">${c.description}</div>
                     </td>
                     <td class="py-2.5 px-2">
