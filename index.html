@@ -475,6 +475,7 @@
       location.reload();
     }
 
+    let globalStatsData = {};
     let categoryChartInst = null;
     let severityChartInst = null;
 
@@ -609,7 +610,7 @@
 
       if (ab.status === 'completed' || ab.v3_hybrid || ab.v1_baseline) {
         if (ab.v3_hybrid) {
-          renderHybridBenchmark(ab);
+          renderHybridBenchmark(ab, data);
           return;
         }
 
@@ -777,7 +778,7 @@
       }
     }
 
-    function renderHybridBenchmark(ab) {
+    function renderHybridBenchmark(ab, data = globalStatsData) {
       const badge = document.getElementById('ab-test-status-badge');
       const container = document.getElementById('ab-test-container');
       if (!badge || !container) return;
@@ -785,6 +786,10 @@
       const v1 = ab.v1_baseline || {};
       const v2 = ab.v2_cot || {};
       const v3 = ab.v3_hybrid || {};
+      const safeData = (typeof data !== 'undefined' && data) ? data : (typeof globalStatsData !== 'undefined' ? globalStatsData : {});
+      const safeCycles = (safeData.distillation_cycles) || (ab && ab.distillation_cycles) || [];
+      const totalEvalCount = (safeData.evaluation && safeData.evaluation.total_evaluated) || (ab && ab.sample_count) || 0;
+
 
       badge.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">
         <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
@@ -1070,7 +1075,7 @@
               </span>
             </div>
             <div class="text-[11px] text-slate-400">
-              全 <strong class="text-white font-mono">${((data && data.distillation_cycles) || (ab && ab.distillation_cycles) || []).length}</strong> 世代推移記録 (実評価データ <strong class="text-white font-mono">${(data && data.evaluation) ? data.evaluation.total_evaluated : 0}</strong> 件ベース)
+              全 <strong class="text-white font-mono">${safeCycles.length}</strong> 世代推移記録 (実評価データ <strong class="text-white font-mono">${totalEvalCount}</strong> 件ベース)
             </div>
           </div>
 
@@ -1126,10 +1131,10 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-800/60 text-[11px]">
-                ${((data && data.distillation_cycles) || (ab && ab.distillation_cycles) || []).map((c, idx) => `
-                  <tr class="hover:bg-slate-900/40 transition ${idx === ((data && data.distillation_cycles) || (ab && ab.distillation_cycles) || []).length - 1 ? 'bg-emerald-950/20' : ''}">
+                ${safeCycles.map((c, idx) => `
+                  <tr class="hover:bg-slate-900/40 transition ${idx === safeCycles.length - 1 ? 'bg-emerald-950/20' : ''}">
                     <td class="py-2.5 px-3">
-                      <div class="font-sans font-bold ${idx === ((data && data.distillation_cycles) || (ab && ab.distillation_cycles) || []).length - 1 ? 'text-emerald-300' : 'text-slate-200'}">${c.name}</div>
+                      <div class="font-sans font-bold ${idx === safeCycles.length - 1 ? 'text-emerald-300' : 'text-slate-200'}">${c.name}</div>
                       <div class="text-[10px] text-slate-500 font-sans">${c.description}</div>
                     </td>
                     <td class="py-2.5 px-2">
